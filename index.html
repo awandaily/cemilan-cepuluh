@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Cemilan Cepuluh POS Enterprise</title>
+  <title>Cemilan Cepuluh POS</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#FF6B35">
+  <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"Cemilan Cepuluh POS","short_name":"Cepuluh POS","start_url":"/","display":"standalone","background_color":"#F8FAFC","theme_color":"#FF6B35","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/8628/8628559.png","sizes":"512x512","type":"image/png"}]}'>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,7 +63,7 @@
   <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center animate-fade-in">
     <div class="loader mb-4"></div>
     <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan ke Cloud...</p>
-    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.4 Enterprise</span>
+    <span class="mt-8 text-[10px] text-gray-400">CemilanCepuluh v6.5 Enterprise</span>
   </div>
 
   <div v-else-if="systemError" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -74,7 +79,7 @@
     <img v-if="storeProfile.logo" :src="storeProfile.logo" class="w-24 h-24 rounded-3xl mb-4 shadow-glass object-cover border-4 border-white/20 animate-pop" />
     <div v-else class="w-20 h-20 bg-white text-primary rounded-3xl flex items-center justify-center text-4xl mb-6 shadow-glass animate-pop"><i class="ph-fill ph-storefront"></i></div>
     
-    <h1 class="text-3xl font-extrabold tracking-tight mb-2">{{ storeProfile.name || 'WarungKas' }}</h1>
+    <h1 class="text-3xl font-extrabold tracking-tight mb-2">{{ storeProfile.name || 'Cemilan Cepuluh' }}</h1>
     <p class="text-white/80 mb-8 text-center text-sm">Masukan PIN (Admin / Kasir).</p>
 
     <div class="flex gap-4 mb-8"><div v-for="i in 4" :key="i" class="w-4 h-4 rounded-full transition-all duration-300" :class="pin.length >= i ? 'bg-white scale-110 shadow-lg' : 'bg-white/30'"></div></div>
@@ -96,7 +101,7 @@
         <img v-if="storeProfile.logo" :src="storeProfile.logo" class="w-10 h-10 rounded-xl object-cover" />
         <div v-else class="bg-primary text-white p-2.5 rounded-xl"><i class="ph-fill ph-storefront text-lg"></i></div>
         <div>
-          <h1 class="font-bold text-secondary tracking-tight leading-tight">{{ storeProfile.name || 'WarungKas' }}</h1>
+          <h1 class="font-bold text-secondary tracking-tight leading-tight">{{ storeProfile.name || 'Cemilan Cepuluh' }}</h1>
           <div class="mt-0.5 flex items-center gap-1.5">
             <span v-if="isOnline" class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded-md font-bold"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Cloud</span>
             <span v-else class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-[9px] px-1.5 py-0.5 rounded-md font-bold"><i class="ph-bold ph-wifi-slash"></i> Offline</span>
@@ -233,6 +238,7 @@
               </div>
               
               <div v-if="getCartQtyByBaseId(item.id) > 0 && item.variants && item.variants.trim() !== ''" class="absolute -top-2 -right-2 bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-30 pointer-events-none">{{ getCartQtyByBaseId(item.id) }}</div>
+
             </div>
             
             <div v-if="!filteredProducts.length" class="col-span-2 text-center py-10 text-gray-400 text-sm">Produk belum tersedia.</div>
@@ -328,8 +334,20 @@
             </div>
 
             <div v-if="historyTab === 'trx'" class="space-y-3 animate-fade-in">
-              <div v-for="trx in filteredTransactions" :key="trx.id" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
-                <div class="flex justify-between items-start">
+              <div class="flex justify-between items-center mb-2 px-2" v-if="filteredTransactions.length > 0">
+                <label class="text-xs flex items-center gap-2 text-gray-500 cursor-pointer select-none font-bold">
+                  <input type="checkbox" @change="toggleAllTrx" :checked="selectedTrx.length === filteredTransactions.length && filteredTransactions.length > 0" class="w-4 h-4 accent-primary rounded"> Pilih Semua
+                </label>
+                <button v-if="selectedTrx.length > 0" @click="bulkDeleteTrx" class="bg-red-50 text-red-500 px-3 py-1.5 rounded-lg text-[10px] font-bold active:scale-95 animate-pop flex items-center gap-1">
+                  <i class="ph-bold ph-trash"></i> Hapus ({{selectedTrx.length}}) Terpilih
+                </button>
+              </div>
+
+              <div v-for="trx in filteredTransactions" :key="trx.id" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3 relative" :class="{'ring-2 ring-primary/50 bg-orange-50/20': selectedTrx.includes(trx.id)}">
+                <div class="absolute top-4 right-4">
+                  <input type="checkbox" :value="trx.id" v-model="selectedTrx" class="w-5 h-5 accent-primary rounded-md cursor-pointer">
+                </div>
+                <div class="flex justify-between items-start pr-8">
                   <div class="flex-1 pr-2">
                     <p class="text-[10px] text-gray-400">{{ formatDateTime(trx.tanggal) }} <span class="bg-gray-100 px-1 py-0.5 rounded text-[8px] ml-1">{{ trx.kasir || 'Admin' }}</span></p>
                     <p class="font-bold text-secondary text-sm mt-0.5">{{ trx.customerName || 'Pelanggan Umum' }}</p>
@@ -340,7 +358,6 @@
                         {{ it.name }} ({{ it.qty }}x)<template v-if="i < parseItems(trx.items).length - 1">, </template>
                       </span>
                     </div>
-
                   </div>
                   <div class="text-right">
                     <p class="font-bold text-success text-sm">+ Rp {{ formatCurrency(trx.total) }}</p>
@@ -355,8 +372,20 @@
             </div>
 
             <div v-if="historyTab === 'exp'" class="space-y-3 animate-fade-in">
-              <div v-for="exp in filteredExpenses" :key="exp.id" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
-                <div class="flex justify-between items-start">
+              <div class="flex justify-between items-center mb-2 px-2" v-if="filteredExpenses.length > 0">
+                <label class="text-xs flex items-center gap-2 text-gray-500 cursor-pointer select-none font-bold">
+                  <input type="checkbox" @change="toggleAllExp" :checked="selectedExp.length === filteredExpenses.length && filteredExpenses.length > 0" class="w-4 h-4 accent-primary rounded"> Pilih Semua
+                </label>
+                <button v-if="selectedExp.length > 0" @click="bulkDeleteExp" class="bg-red-50 text-red-500 px-3 py-1.5 rounded-lg text-[10px] font-bold active:scale-95 animate-pop flex items-center gap-1">
+                  <i class="ph-bold ph-trash"></i> Hapus ({{selectedExp.length}}) Terpilih
+                </button>
+              </div>
+
+              <div v-for="exp in filteredExpenses" :key="exp.id" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3 relative" :class="{'ring-2 ring-primary/50 bg-orange-50/20': selectedExp.includes(exp.id)}">
+                <div class="absolute top-4 right-4">
+                  <input type="checkbox" :value="exp.id" v-model="selectedExp" class="w-5 h-5 accent-primary rounded-md cursor-pointer">
+                </div>
+                <div class="flex justify-between items-start pr-8">
                   <div>
                     <p class="text-[10px] text-gray-400">{{ formatDateTime(exp.tanggal) }}</p>
                     <p class="font-bold text-secondary text-sm mt-0.5">{{ exp.keterangan || 'Tanpa Keterangan' }}</p>
@@ -365,7 +394,7 @@
                   <div class="text-right"><p class="font-bold text-red-500 text-sm">- Rp {{ formatCurrency(exp.nominal) }}</p></div>
                 </div>
                 <div class="flex justify-end gap-2 border-t border-gray-50 pt-3 mt-1">
-                  <button @click="editExpense(exp)" class="text-[11px] font-semibold text-blue-500 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-pencil-simple"></i> Edit</button>
+                  <button @click="openExpenseModal(exp)" class="text-[11px] font-semibold text-blue-500 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-pencil-simple"></i> Edit</button>
                   <button @click="deleteExpense(exp.id)" class="text-[11px] font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-trash"></i> Hapus</button>
                 </div>
               </div>
@@ -399,13 +428,14 @@
               <div class="bg-green-50 p-4 rounded-2xl border border-green-100 mt-2 space-y-3">
                 <p class="text-[10px] font-bold text-green-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-whatsapp-logo"></i> Template Teks Struk WA</p>
                 <div>
-                  <label class="text-[10px] text-gray-500 font-medium">Header / Pembuka</label>
-                  <textarea v-model="formSettings.waHeader" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-xs bg-white resize-none" placeholder="Halo! Berikut pesanan Anda:"></textarea>
+                  <label class="text-[10px] text-gray-500 font-medium block mb-1">Header / Pembuka</label>
+                  <textarea v-model="formSettings.waHeader" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-xs bg-white resize-none" placeholder="*Halo!* Berikut pesanan Anda:"></textarea>
                 </div>
                 <div>
-                  <label class="text-[10px] text-gray-500 font-medium">Footer / Penutup</label>
-                  <textarea v-model="formSettings.waFooter" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-xs bg-white resize-none" placeholder="Terima kasih sudah jajan!"></textarea>
+                  <label class="text-[10px] text-gray-500 font-medium block mb-1">Footer / Penutup</label>
+                  <textarea v-model="formSettings.waFooter" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-xs bg-white resize-none" placeholder="_Terima kasih sudah jajan!_"></textarea>
                 </div>
+                <p class="text-[9px] text-gray-400 leading-relaxed">Catatan: Gunakan *teks* untuk Bold, _teks_ untuk Miring, atau ~teks~ untuk Coret.</p>
               </div>
 
               <div class="grid grid-cols-2 gap-3 pt-2">
@@ -418,6 +448,7 @@
                   <input v-model="formSettings.pinKasir" type="number" maxlength="4" placeholder="0000" class="w-full bg-transparent outline-none font-bold tracking-widest text-secondary">
                 </div>
               </div>
+              <p class="text-[10px] text-gray-400">PIN Kasir tidak bisa buka Pengaturan & Laporan.</p>
 
               <button @click="saveSettings" :disabled="isSavingSettings" class="w-full bg-primary text-white py-3 rounded-xl font-bold active:scale-95 shadow-md flex items-center justify-center gap-2 disabled:opacity-70 mt-2">
                 <i class="ph-bold ph-floppy-disk"></i> {{ isSavingSettings ? 'Menyimpan...' : 'Simpan Pengaturan' }}
@@ -435,6 +466,7 @@
               <label class="w-full text-left px-4 py-3 hover:bg-gray-50 flex justify-between items-center rounded-xl transition-colors cursor-pointer"><span class="text-sm font-medium">Upload Excel ke Cloud</span><i class="ph-bold ph-upload-simple text-gray-400 text-lg"></i><input type="file" accept=".xlsx,.xls" class="hidden" @change="importDataExcel"></label>
             </div>
           </div>
+
         </div>
         
         <div v-else class="flex flex-col items-center justify-center py-20 animate-fade-in text-center px-4">
@@ -688,6 +720,10 @@ createApp({
     const reportFilter = ref({ mode: 'today', start: '', end: '' });
     const dateFilter = ref({ mode: 'single', start: '', end: '' });
 
+    // State untuk Bulk Delete
+    const selectedTrx = ref([]);
+    const selectedExp = ref([]);
+
     const customer = ref({ name: '', phone: '' });
     const diskon = ref(0);
     const metodeBayar = ref('Cash');
@@ -917,7 +953,7 @@ createApp({
     // SMART WA TEMPLATE BUG FIX (NO NUMBER & TEXT FORMAT)
     // =========================================================
     const generateWAURL = () => { 
-      let text = `*${formSettings.value.waHeader || 'Halo! Berikut detail pesanan Anda:'}*\n`; 
+      let text = `*${formSettings.value.waHeader || 'Halo! Berikut pesanan Anda:'}*\n`; 
       text += new Date().toLocaleString('id-ID') + '\n'; 
       text += '---------------------------------------------\n'; 
       cart.value.forEach(item => { 
@@ -927,7 +963,7 @@ createApp({
       if (diskon.value > 0) text += `Diskon: -Rp ${formatCurrency(diskon.value)}\n`; 
       text += `*TOTAL: Rp ${formatCurrency(cartTotal.value)}*\n`; 
       text += '---------------------------------------------\n'; 
-      text += `_${formSettings.value.pesanfooter || 'Terima kasih sudah jajan!'}_`; 
+      text += `${formSettings.value.waFooter || 'Terima kasih sudah jajan!'}`; 
 
       const encodedText = encodeURIComponent(text);
       let targetNum = customer.value.phone || ''; 
@@ -970,7 +1006,13 @@ createApp({
       db.ref().update(updates);
       
       if (type === 'wa') window.open(generateWAURL(), '_blank');
-      cart.value = []; customer.value = { name: '', phone: '' }; diskon.value = 0; metodeBayar.value = 'Cash'; catatanOrder.value = ''; showCartModal.value = false; changeTab('dashboard'); notify('success', 'Transaksi berhasil dicatat');
+      
+      showCartModal.value = false; 
+      // Jeda sebentar agar animasi modal turun mulus sebelum dibersihkan
+      setTimeout(() => {
+        cart.value = []; customer.value = { name: '', phone: '' }; diskon.value = 0; metodeBayar.value = 'Cash'; catatanOrder.value = ''; 
+        changeTab('dashboard'); notify('success', 'Transaksi berhasil dicatat');
+      }, 300);
     };
 
     const deleteTransaction = async (trx) => { 
@@ -990,6 +1032,33 @@ createApp({
       cart.value = [...items]; customer.value = { name: trx.customerName || '', phone: trx.customerPhone || '' }; diskon.value = trx.diskon || 0; metodeBayar.value = trx.metodeBayar || 'Cash'; catatanOrder.value = trx.catatan || ''; changeTab('kasir'); notify('info', 'Silakan ubah pesanan di Keranjang'); } }); 
     };
 
+    // SMART BULK DELETE TRANSAKSI
+    const toggleAllTrx = (e) => { if(e.target.checked) selectedTrx.value = filteredTransactions.value.map(t => t.id); else selectedTrx.value = []; };
+    const bulkDeleteTrx = async () => {
+      const ok = await confirmAction('Hapus Massal?', `Anda akan menghapus ${selectedTrx.value.length} transaksi permanen.`);
+      if(!ok) return;
+      let updates = {};
+      let stockReturns = {};
+      selectedTrx.value.forEach(id => {
+        const trx = transactions.value.find(t => t.id === id);
+        if(trx) {
+          updates['warungkas/transactions/' + id] = null;
+          const items = parseItems(trx.items);
+          items.forEach(item => {
+            const baseId = item.baseId || item.id;
+            stockReturns[baseId] = (stockReturns[baseId] || 0) + item.qty;
+          });
+        }
+      });
+      // Akumulasi pengembalian stok agar aman
+      Object.keys(stockReturns).forEach(baseId => {
+         const productInDB = products.value.find(p => p.id === baseId);
+         if (productInDB) { updates[`warungkas/products/${baseId}/stock`] = (productInDB.stock || 0) + stockReturns[baseId]; }
+      });
+      await db.ref().update(updates);
+      selectedTrx.value = []; notify('success', 'Transaksi massal dihapus');
+    };
+
     const openProductModal = (p = null) => { formProduct.value = p ? { ...p } : { id: null, name: '', category: 'Makanan', price: 0, hpp: 0, stock: 100, icon: '📦', status: 'aktif', variants: '' }; showProductModal.value = true; };
     const saveProduct = async () => { 
       if (!formProduct.value.name || Number(formProduct.value.price) <= 0) { notify('error', 'Nama dan harga wajib diisi'); return; } 
@@ -1001,7 +1070,7 @@ createApp({
 
     // SMART CRUD PENGELUARAN (Bisa Mode Tambah/Edit)
     const openExpenseModal = (exp = null) => {
-      if (exp) {
+      if (exp && exp.id) {
         formExpense.value = { id: exp.id, kategori: exp.kategori, items: [{ keterangan: exp.keterangan, nominal: exp.nominal }] };
       } else {
         formExpense.value = { id: null, kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] };
@@ -1039,6 +1108,17 @@ createApp({
     };
 
     const deleteExpense = async (id) => { const ok = await confirmAction('Hapus pengeluaran?', 'Data pengeluaran akan dihapus permanen.'); if (!ok) return; db.ref('warungkas/expenses/' + id).remove(); notify('success', 'Pengeluaran dihapus'); };
+
+    // SMART BULK DELETE PENGELUARAN
+    const toggleAllExp = (e) => { if(e.target.checked) selectedExp.value = filteredExpenses.value.map(e => e.id); else selectedExp.value = []; };
+    const bulkDeleteExp = async () => {
+      const ok = await confirmAction('Hapus Massal?', `Anda akan menghapus ${selectedExp.value.length} pengeluaran permanen.`);
+      if(!ok) return;
+      let updates = {};
+      selectedExp.value.forEach(id => { updates['warungkas/expenses/' + id] = null; });
+      await db.ref().update(updates);
+      selectedExp.value = []; notify('success', 'Pengeluaran massal dihapus');
+    };
 
     const saveSettings = async () => { 
       if (String(formSettings.value.pin).length !== 4 || isNaN(Number(formSettings.value.pin))) { notify('error', 'PIN Admin harus 4 digit angka'); return; } 
@@ -1112,7 +1192,8 @@ createApp({
       reportFilter, filteredReport, filteredTransactions, filteredExpenses, dashboardStats, topSoldToday,
       storeProfile, formSettings, saveSettings, isSavingSettings, exportDataExcel, importDataExcel, handleLogoUpload,
       setReportFilter, openDateFilter, showDateFilterModal, dateFilter, applyDateFilter, resetDateFilter, tabs, deleteTransaction, editTransaction,
-      isOnline, userRole, isAdmin
+      isOnline, userRole, isAdmin,
+      selectedTrx, selectedExp, toggleAllTrx, bulkDeleteTrx, toggleAllExp, bulkDeleteExp
     };
   }
 }).mount('#app');
