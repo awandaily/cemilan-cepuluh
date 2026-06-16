@@ -15,6 +15,7 @@
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
+  <!-- PUSTAKA FIREBASE REALTIME DATABASE -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
@@ -55,13 +56,14 @@
 <body class="text-secondary antialiased">
 <div id="app" v-cloak class="w-full max-w-md mx-auto bg-background h-screen relative shadow-2xl overflow-hidden flex flex-col">
 
-  <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center animate-fade-in">
+  <!-- SYSTEM LOADING -->
+  <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center animate-fade-in">
     <div class="loader mb-4"></div>
     <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan ke Cloud...</p>
-    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.0 Enterprise</span>
+    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.1 (Topping Edition)</span>
   </div>
 
-  <div v-else-if="systemError" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+  <div v-else-if="systemError" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
     <i class="ph-fill ph-warning-circle text-red-500 text-7xl mb-4"></i>
     <h2 class="text-xl font-bold text-secondary mb-2">Database Error</h2>
     <p class="text-xs text-gray-500 mb-4 bg-red-50 p-4 rounded-xl border border-red-100 text-left font-mono break-words w-full">{{ systemError }}</p>
@@ -70,7 +72,8 @@
     </button>
   </div>
 
-  <div v-else-if="!isLoggedIn" class="absolute inset-0 bg-primary z-40 flex flex-col items-center justify-center px-6 animate-fade-in text-white">
+  <!-- LOGIN SCREEN -->
+  <div v-else-if="!isLoggedIn" class="absolute inset-0 bg-primary z-[55] flex flex-col items-center justify-center px-6 animate-fade-in text-white">
     <img v-if="storeProfile.logo" :src="storeProfile.logo" class="w-24 h-24 rounded-3xl mb-4 shadow-glass object-cover border-4 border-white/20 animate-pop" />
     <div v-else class="w-20 h-20 bg-white text-primary rounded-3xl flex items-center justify-center text-4xl mb-6 shadow-glass animate-pop"><i class="ph-fill ph-storefront"></i></div>
     
@@ -91,6 +94,7 @@
   </div>
 
   <template v-else>
+    <!-- HEADER -->
     <header class="bg-surface px-5 py-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-100 shadow-sm">
       <div>
         <h1 class="text-xl font-bold flex items-center gap-2 text-secondary tracking-tight">
@@ -99,12 +103,14 @@
           {{ storeProfile.name }}
         </h1>
         <div class="mt-1.5 flex items-center gap-2">
+          <!-- ONLINE / OFFLINE PRESENCE -->
           <span v-if="isOnline" class="inline-flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-[9px] px-2 py-0.5 rounded-full font-bold">
             <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Cloud
           </span>
           <span v-else class="inline-flex items-center gap-1 bg-red-100 text-red-700 border border-red-200 text-[9px] px-2 py-0.5 rounded-full font-bold">
             <i class="ph-bold ph-wifi-slash"></i> Offline
           </span>
+          <!-- ROLE BADGE -->
           <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">
             <i class="ph-bold ph-user"></i> {{ userRole }}
           </span>
@@ -119,6 +125,7 @@
     <main class="flex-1 min-h-0 scroll-area pb-[92px]">
       <div class="p-5">
 
+        <!-- DASHBOARD -->
         <div v-if="currentTab === 'dashboard'" class="space-y-5 animate-fade-in">
           
           <div class="bg-blue-50 border border-blue-100 p-3.5 rounded-2xl flex items-start gap-3 shadow-sm">
@@ -202,6 +209,7 @@
           </div>
         </div>
 
+        <!-- TAB KASIR -->
         <div v-else-if="currentTab === 'kasir'" class="space-y-5 animate-fade-in relative min-h-full">
           <div class="relative">
             <i class="ph-bold ph-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
@@ -216,30 +224,34 @@
           <div class="grid grid-cols-2 gap-4 pb-32">
             <div v-for="item in filteredProducts" :key="item.id" class="bg-white rounded-3xl shadow-soft border border-gray-50 active:bg-gray-50 cursor-pointer flex flex-col items-center text-center relative animate-pop overflow-hidden min-h-[140px]" :class="{'opacity-50 grayscale': item.stock <= 0}">
               
-              <div @click="item.stock > 0 ? addToCart(item) : notify('error', 'Stok Habis')" class="w-full h-full flex flex-col items-center justify-center p-4">
-                <div class="absolute top-2 left-2 text-[9px] font-bold px-1.5 py-0.5 rounded-md" :class="item.stock > 5 ? 'bg-gray-100 text-gray-500' : (item.stock > 0 ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600')">
-                  Stok: {{ item.stock }}
-                </div>
-                
+              <!-- Tampilan Default Menu -->
+              <div @click="handleProductClick(item)" class="w-full h-full flex flex-col items-center justify-center p-4 relative">
+                <div class="absolute top-2 left-2 text-[9px] font-bold px-1.5 py-0.5 rounded-md" :class="item.stock > 5 ? 'bg-gray-100 text-gray-500' : (item.stock > 0 ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600')">Stok: {{ item.stock }}</div>
                 <div class="text-5xl mb-3 mt-4">{{ item.icon }}</div>
                 <h3 class="text-sm font-bold text-secondary leading-tight">{{ item.name }}</h3>
                 <p class="text-primary font-extrabold text-sm mt-1">Rp {{ formatCurrency(item.price) }}</p>
                 <div v-if="item.stock <= 0" class="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px] z-10"><span class="bg-red-500 text-white font-black text-xs px-3 py-1 rounded-full uppercase tracking-wider transform -rotate-12 border-2 border-white shadow-md">HABIS</span></div>
               </div>
 
-              <div v-if="getCartQty(item.id) > 0" class="absolute inset-0 bg-white/95 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center gap-3 animate-fade-in border-2 border-primary rounded-3xl">
+              <!-- Tampilan Overlay (Control +/-) JIKA TIDAK ADA VARIANT/TOPPING -->
+              <div v-if="getCartQtyByBaseId(item.id) > 0 && !item.variants" class="absolute inset-0 bg-white/95 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center gap-3 animate-fade-in border-2 border-primary rounded-3xl">
                 <p class="font-bold text-sm text-secondary px-2 truncate w-full text-center">{{ item.name }}</p>
                 <div class="flex items-center gap-3">
-                  <button @click.stop="updateQtyById(item.id, -1)" class="bg-red-100 text-red-600 w-10 h-10 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform"><i class="ph-bold ph-minus text-lg"></i></button>
-                  <span class="text-2xl font-black text-primary w-8 text-center">{{ getCartQty(item.id) }}</span>
-                  <button @click.stop="updateQtyById(item.id, 1)" class="bg-green-100 text-green-600 w-10 h-10 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform"><i class="ph-bold ph-plus text-lg"></i></button>
+                  <button @click.stop="reduceCartByBaseId(item.id)" class="bg-red-100 text-red-600 w-10 h-10 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform"><i class="ph-bold ph-minus text-lg"></i></button>
+                  <span class="text-2xl font-black text-primary w-8 text-center">{{ getCartQtyByBaseId(item.id) }}</span>
+                  <button @click.stop="handleProductClick(item)" class="bg-green-100 text-green-600 w-10 h-10 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform"><i class="ph-bold ph-plus text-lg"></i></button>
                 </div>
               </div>
+              
+              <!-- Tampilan Indicator khusus untuk item bertopping (Overlay +/- dinonaktifkan agar tidak bingung mau kurang topping yg mana) -->
+              <div v-if="getCartQtyByBaseId(item.id) > 0 && item.variants" class="absolute -top-2 -right-2 bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-30 pointer-events-none">{{ getCartQtyByBaseId(item.id) }}</div>
+
             </div>
             
             <div v-if="!filteredProducts.length" class="col-span-2 text-center py-10 text-gray-400 text-sm">Produk belum tersedia.</div>
           </div>
 
+          <!-- FLOATING CART -->
           <div v-if="cart.length" class="fixed bottom-[88px] left-0 right-0 max-w-md mx-auto px-5 z-20 animate-slide-up">
             <div class="bg-secondary text-white rounded-3xl p-3 shadow-glass flex items-center">
               <button @click.stop="clearCart" class="bg-white/10 hover:bg-red-500/20 text-white hover:text-red-400 p-3 rounded-2xl active:scale-90 transition-all mr-3 flex-shrink-0" title="Batal Transaksi"><i class="ph-bold ph-trash text-xl"></i></button>
@@ -254,6 +266,7 @@
           </div>
         </div>
 
+        <!-- TAB PRODUK (KATALOG - KHUSUS ADMIN) -->
         <div v-else-if="currentTab === 'produk' && isAdmin" class="space-y-4 animate-fade-in">
           <div class="flex justify-between items-center mb-1">
             <h2 class="font-bold text-xl text-secondary">Katalog & Stok</h2>
@@ -286,12 +299,15 @@
                   <div class="w-px h-4 bg-gray-200"></div>
                   <p class="text-[10px] text-gray-400">Stok <span class="font-bold text-sm ml-1" :class="item.stock > 5 ? 'text-green-600' : 'text-red-600'">{{ item.stock }}</span></p>
                 </div>
+                <!-- Indikator ada Topping -->
+                <div v-if="item.variants" class="mt-2 text-[9px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded inline-block font-semibold">Tersedia Pilihan Topping</div>
               </div>
             </div>
             <div v-if="!filteredCatalog.length" class="text-center text-xs text-gray-400 py-10">Pencarian tidak ditemukan.</div>
           </div>
         </div>
 
+        <!-- TAB LAPORAN (KHUSUS ADMIN) -->
         <div v-else-if="currentTab === 'laporan' && isAdmin" class="space-y-5 animate-fade-in">
           <div class="flex justify-between items-center">
             <h2 class="font-bold text-xl text-secondary">Laporan Keuangan</h2>
@@ -328,6 +344,7 @@
               <button @click="historyTab = 'exp'" :class="historyTab === 'exp' ? 'border-b-2 border-primary text-primary font-bold' : 'text-gray-400 font-medium'" class="pb-2 text-sm transition-all flex items-center gap-1"><i class="ph-bold ph-hand-coins"></i> Pengeluaran</button>
             </div>
 
+            <!-- HISTORI TRANSAKSI -->
             <div v-if="historyTab === 'trx'" class="space-y-3 animate-fade-in">
               <div v-for="trx in filteredTransactions" :key="trx.id" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
                 <div class="flex justify-between items-start">
@@ -374,6 +391,7 @@
           </div>
         </div>
 
+        <!-- TAB PENGATURAN (KHUSUS ADMIN) -->
         <div v-else-if="currentTab === 'pengaturan' && isAdmin" class="space-y-6 animate-fade-in pb-24">
           <h2 class="font-bold text-xl text-secondary">Pengaturan</h2>
 
@@ -442,6 +460,7 @@
       </div>
     </main>
 
+    <!-- BOTTOM NAV FIXED (Berubah sesuai role) -->
     <nav class="glass-nav flex justify-around px-2 py-3 fixed bottom-0 left-0 right-0 w-full max-w-md mx-auto z-30 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.05)] rounded-t-3xl">
       <template v-for="tab in tabs" :key="tab">
         <button v-if="isAdmin || (tab === 'dashboard' || tab === 'kasir')" @click="changeTab(tab)" class="flex flex-col items-center p-2 w-16 transition-all duration-300 relative group">
@@ -452,6 +471,41 @@
       </template>
     </nav>
 
+    <!-- ================== SEMUA MODAL ================== -->
+
+    <!-- MODAL PILIH TOPPING / VARIAN (FITUR BARU ENTERPRISE) -->
+    <div v-if="showVariantModal" class="fixed inset-0 bg-secondary/80 z-[60] flex items-end justify-center backdrop-blur-sm" @click.self="showVariantModal=false">
+      <div class="bg-white w-full max-w-md rounded-t-[2rem] p-5 animate-slide-up shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center mb-4 shrink-0">
+          <h2 class="font-extrabold text-xl">Pilih Topping</h2>
+          <button @click="showVariantModal=false" class="bg-gray-100 p-2 rounded-full active:scale-90"><i class="ph-bold ph-x"></i></button>
+        </div>
+        
+        <div class="mb-4 text-center shrink-0">
+           <div class="text-4xl mb-2">{{ selectedProductForVariant.icon }}</div>
+           <h3 class="font-bold text-lg text-secondary leading-tight">{{ selectedProductForVariant.name }}</h3>
+           <p class="text-primary font-bold">Rp {{ formatCurrency(selectedProductForVariant.price) }}</p>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-3 mb-4 hide-scrollbar border-t border-b border-gray-100 py-3">
+           <label v-for="(v, idx) in parsedVariantsList" :key="idx" class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl border border-gray-200 cursor-pointer active:scale-95 transition-all" :class="{'border-primary bg-orange-50': selectedVariants.includes(v)}">
+             <div>
+               <p class="font-bold text-sm text-secondary">{{ v.name }}</p>
+               <p class="text-xs text-primary font-semibold" v-if="v.price > 0">+ Rp {{ formatCurrency(v.price) }}</p>
+               <p class="text-xs text-gray-400 font-semibold" v-else>Gratis</p>
+             </div>
+             <input type="checkbox" :value="v" v-model="selectedVariants" class="w-5 h-5 accent-primary rounded-md">
+           </label>
+        </div>
+
+        <button @click="addVariantToCart" class="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-md active:scale-95 flex justify-between px-6 shrink-0">
+           <span>Tambah Pesanan</span>
+           <span>Rp {{ formatCurrency(variantTotalPrice) }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL KERANJANG KASIR -->
     <div v-if="showCartModal" class="fixed inset-0 bg-secondary/80 z-50 flex items-end justify-center backdrop-blur-sm" @click.self="showCartModal=false">
       <div class="bg-background w-full max-w-md rounded-t-[2rem] p-5 max-h-[92vh] flex flex-col relative animate-slide-up shadow-2xl">
         <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
@@ -470,8 +524,8 @@
 
         <div class="flex-1 overflow-y-auto space-y-3 mb-4 rounded-xl hide-scrollbar">
           <div v-for="(item, index) in cart" :key="index" class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-soft border border-gray-50">
-            <div class="flex-1">
-              <p class="font-bold text-sm">{{ item.name }}</p>
+            <div class="flex-1 pr-2">
+              <p class="font-bold text-sm leading-tight">{{ item.name }}</p>
               <p class="text-primary font-semibold text-sm">Rp {{ formatCurrency(item.price) }}</p>
             </div>
             <div class="flex items-center gap-3 bg-gray-50 px-2 py-1.5 rounded-xl border border-gray-100">
@@ -503,31 +557,43 @@
       </div>
     </div>
 
+    <!-- MODAL KATALOG MENU (TAMBAH/EDIT) -->
     <div v-if="showProductModal" class="fixed inset-0 bg-secondary/80 z-50 flex items-end justify-center backdrop-blur-sm" @click.self="showProductModal=false">
-      <div class="bg-white w-full max-w-md rounded-t-[2rem] p-5 animate-slide-up shadow-2xl">
-        <div class="flex justify-between items-center mb-5"><h2 class="font-extrabold text-xl">{{ formProduct.id ? 'Edit Menu' : 'Tambah Menu Baru' }}</h2><button @click="showProductModal=false" class="bg-gray-100 p-2 rounded-full"><i class="ph-bold ph-x"></i></button></div>
-        <div class="space-y-4 mb-6">
+      <div class="bg-white w-full max-w-md rounded-t-[2rem] p-5 animate-slide-up shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center mb-5 shrink-0">
+          <h2 class="font-extrabold text-xl">{{ formProduct.id ? 'Edit Menu' : 'Tambah Menu Baru' }}</h2><button @click="showProductModal=false" class="bg-gray-100 p-2 rounded-full active:scale-90"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto space-y-4 mb-4 hide-scrollbar px-1">
           <div><label class="text-xs text-gray-500 font-bold mb-1 block">Nama Menu</label><input v-model="formProduct.name" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary text-sm"></div>
           
           <div class="grid grid-cols-3 gap-2">
             <div><label class="text-[10px] text-gray-500 font-bold mb-1 block">Harga Jual</label><input v-model.number="formProduct.price" type="number" class="w-full border border-gray-200 rounded-xl px-3 py-3 outline-none focus:border-primary text-sm"></div>
             <div><label class="text-[10px] text-gray-500 font-bold mb-1 block">HPP/Modal</label><input v-model.number="formProduct.hpp" type="number" class="w-full border border-gray-200 rounded-xl px-3 py-3 outline-none focus:border-primary text-sm"></div>
-            <div><label class="text-[10px] text-blue-500 font-bold mb-1 block">Stok Gudang</label><input v-model.number="formProduct.stock" type="number" class="w-full border border-blue-200 bg-blue-50 rounded-xl px-3 py-3 outline-none focus:border-primary text-sm font-bold text-blue-700"></div>
+            <div><label class="text-[10px] text-blue-500 font-bold mb-1 block">Stok</label><input v-model.number="formProduct.stock" type="number" class="w-full border border-blue-200 bg-blue-50 rounded-xl px-3 py-3 outline-none focus:border-primary text-sm font-bold text-blue-700"></div>
           </div>
           
           <div class="grid grid-cols-2 gap-3">
             <div><label class="text-xs text-gray-500 font-bold mb-1 block">Kategori</label><select v-model="formProduct.category" class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary text-sm bg-white"><option v-for="cat in availableCategories" :key="cat" :value="cat">{{ cat }}</option></select></div>
             <div><label class="text-xs text-gray-500 font-bold mb-1 block">Emoji/Icon</label><input v-model="formProduct.icon" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary text-center text-2xl"></div>
           </div>
-          <div><label class="text-xs text-gray-500 font-bold mb-1 block">Status</label><select v-model="formProduct.status" class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary text-sm bg-white"><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></div>
-          <div class="flex gap-3">
-            <button v-if="formProduct.id" @click="deleteProduct(formProduct.id)" class="bg-red-50 text-red-500 p-4 rounded-xl font-bold"><i class="ph-bold ph-trash"></i></button>
-            <button @click="saveProduct" class="flex-1 bg-primary text-white py-4 rounded-xl font-bold active:scale-95">Simpan Menu</button>
+
+          <!-- FITUR BARU: INPUT TOPPING -->
+          <div>
+            <label class="text-xs text-primary font-bold mb-1 block">Topping / Add-on (Opsional)</label>
+            <input v-model="formProduct.variants" type="text" placeholder="Cth: Keju:2000, Boba:3000, Meses:0" class="w-full border border-primary/30 bg-orange-50 rounded-xl px-4 py-3 outline-none focus:border-primary text-sm">
+            <p class="text-[9px] text-gray-400 mt-1">Format: Nama:Harga, pisahkan dengan koma.</p>
           </div>
+
+          <div><label class="text-xs text-gray-500 font-bold mb-1 block">Status</label><select v-model="formProduct.status" class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary text-sm bg-white"><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></div>
+        </div>
+        <div class="flex gap-3 shrink-0">
+          <button v-if="formProduct.id" @click="deleteProduct(formProduct.id)" class="bg-red-50 text-red-500 p-4 rounded-xl font-bold active:scale-95"><i class="ph-bold ph-trash"></i></button>
+          <button @click="saveProduct" class="flex-1 bg-primary text-white py-4 rounded-xl font-bold active:scale-95">Simpan Menu</button>
         </div>
       </div>
     </div>
 
+    <!-- MODAL CATAT PENGELUARAN -->
     <div v-if="showExpenseModal" class="fixed inset-0 bg-secondary/80 z-50 flex items-end justify-center backdrop-blur-sm" @click.self="showExpenseModal=false">
       <div class="bg-white w-full max-w-md rounded-t-[2rem] p-5 animate-slide-up shadow-2xl flex flex-col max-h-[90vh]">
         <div class="flex justify-between items-center mb-5 shrink-0">
@@ -569,6 +635,7 @@
       </div>
     </div>
 
+    <!-- FILTER TANGGAL -->
     <div v-if="showDateFilterModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" @click.self="showDateFilterModal=false">
       <div class="bg-white rounded-3xl w-full max-w-sm p-6 animate-slide-up shadow-2xl">
         <h3 class="font-extrabold text-lg mb-4 text-center">Filter Berdasarkan Tanggal</h3>
@@ -588,10 +655,6 @@
 </div>
 
 <script>
-// =========================================================
-// SCRIPT FIREBASE INITIALIZATION 
-// =========================================================
-
 // =========================================================
 // ⬇️ GANTI FIREBASE CONFIG ANDA DI SINI ⬇️
 // =========================================================
@@ -634,6 +697,7 @@ createApp({
     const showProductModal = ref(false);
     const showExpenseModal = ref(false);
     const showDateFilterModal = ref(false);
+    const showVariantModal = ref(false); // Modal Topping
     const isSavingSettings = ref(false);
 
     // Fitur Enterprise: Koneksi Database
@@ -654,20 +718,24 @@ createApp({
     const metodeBayar = ref('Cash');
     const catatanOrder = ref('');
 
+    // State Topping
+    const selectedProductForVariant = ref(null);
+    const selectedVariants = ref([]);
+
     const storeProfile = ref({ name: 'WarungKas', phone: '', logo: '' });
     const formSettings = ref({ namawarung: 'WarungKas', nowawarung: '', alamat: '', pesanfooter: 'Terima kasih sudah jajan!', pin: '1234', pinKasir: '0000', logo: '' });
     const activePin = ref('1234');
     const activePinKasir = ref('0000');
     
-    // Form Produk ditambah Stok
-    const formProduct = ref({ id: null, name: '', category: 'Makanan', price: 0, hpp: 0, stock: 100, icon: '📦', status: 'aktif' });
+    // Form Produk ditambah field "variants"
+    const formProduct = ref({ id: null, name: '', category: 'Makanan', price: 0, hpp: 0, stock: 100, icon: '📦', status: 'aktif', variants: '' });
     const formExpense = ref({ kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] });
 
     const liveClock = ref('');
     const currentDateTime = ref('');
     const tabs = ['dashboard', 'kasir', 'produk', 'laporan', 'pengaturan'];
 
-    // Fitur Enterprise: Auto-Lock Sesi (Idle Timeout 15 Menit)
+    // Auto-Lock Sesi (Idle Timeout 15 Menit)
     const IDLE_TIMEOUT_MS = 15 * 60 * 1000; 
     let idleTimer;
 
@@ -675,11 +743,7 @@ createApp({
       clearTimeout(idleTimer);
       if (isLoggedIn.value) {
         idleTimer = setTimeout(() => {
-          isLoggedIn.value = false;
-          pin.value = '';
-          currentTab.value = 'dashboard';
-          userRole.value = '';
-          loginError.value = "Sesi Anda terkunci otomatis demi keamanan.";
+          isLoggedIn.value = false; pin.value = ''; currentTab.value = 'dashboard'; userRole.value = ''; loginError.value = "Sesi Anda terkunci otomatis demi keamanan.";
         }, IDLE_TIMEOUT_MS);
       }
     };
@@ -744,7 +808,7 @@ createApp({
           activePinKasir.value = String(data.settings.pinKasir || '0000');
         } else {
           if(products.value.length === 0) {
-             const dummy = { id: generateId('PRD'), name: 'Sosis Bakar Besar', category: 'Cemilan', price: 12000, hpp: 6000, stock: 100, icon: '🌭', status: 'aktif' };
+             const dummy = { id: generateId('PRD'), name: 'Sosis Bakar Besar', category: 'Cemilan', price: 12000, hpp: 6000, stock: 100, icon: '🌭', status: 'aktif', variants: '' };
              db.ref('warungkas/products/' + dummy.id).set(dummy);
           }
         }
@@ -778,22 +842,104 @@ createApp({
     const filteredProducts = computed(() => { return products.value.filter(p => { const catOk = activeCategory.value === 'Semua' || p.category === activeCategory.value; const searchOk = p.name.toLowerCase().includes(searchQuery.value.toLowerCase()); const statusOk = p.status !== 'nonaktif'; return catOk && searchOk && statusOk; }); });
     const filteredCatalog = computed(() => { return products.value.filter(p => p.name.toLowerCase().includes(searchQuery.value.toLowerCase())); });
 
+    // =========================================================
+    // LOGIKA TOPPING / VARIANT KE KERANJANG
+    // =========================================================
+    
+    // Parsing String "Keju:2000, Coklat:1000" jadi Array Object untuk Modal
+    const parsedVariantsList = computed(() => {
+      if (!selectedProductForVariant.value || !selectedProductForVariant.value.variants) return [];
+      return selectedProductForVariant.value.variants.split(',').map(v => {
+        const [name, price] = v.split(':');
+        return { name: name ? name.trim() : '', price: Number(price) || 0 };
+      }).filter(v => v.name);
+    });
+
+    const variantTotalPrice = computed(() => {
+      if (!selectedProductForVariant.value) return 0;
+      let total = Number(selectedProductForVariant.value.price);
+      selectedVariants.value.forEach(v => { total += v.price; });
+      return total;
+    });
+
+    const handleProductClick = (item) => {
+      if (item.stock <= 0) { notify('error', 'Stok Habis'); return; }
+      
+      // Jika produk punya data varian/topping, buka pop-up dulu
+      if (item.variants && item.variants.trim() !== '') {
+        selectedProductForVariant.value = item;
+        selectedVariants.value = []; // Reset pilihan topping
+        showVariantModal.value = true;
+      } else {
+        addToCart(item); // Langsung masuk keranjang
+      }
+    };
+
+    const addVariantToCart = () => {
+      let finalPrice = Number(selectedProductForVariant.value.price);
+      let extraNames = [];
+      selectedVariants.value.forEach(v => {
+        finalPrice += v.price;
+        extraNames.push(v.name);
+      });
+      
+      let finalName = selectedProductForVariant.value.name;
+      if (extraNames.length > 0) {
+        finalName += ` (+ ${extraNames.join(', ')})`;
+      }
+      
+      // Buat Unique ID di keranjang agar tidak tercampur dengan topping beda
+      const cartItemKey = selectedProductForVariant.value.id + extraNames.join('');
+      
+      const existingItem = cart.value.find(i => i.cartKey === cartItemKey);
+      if (existingItem) {
+        if (existingItem.qty >= (selectedProductForVariant.value.stock || 0)) { notify('error', 'Stok tidak mencukupi'); return; }
+        existingItem.qty += 1;
+      } else {
+        cart.value.push({
+          ...selectedProductForVariant.value,
+          cartKey: cartItemKey,
+          name: finalName,
+          price: finalPrice,
+          qty: 1,
+          baseId: selectedProductForVariant.value.id // baseId penting untuk potong stok asli
+        });
+      }
+      
+      showVariantModal.value = false;
+      notify('success', `${finalName} ditambahkan`);
+    };
+
     const addToCart = (product) => { 
-      const itemInCart = cart.value.find(i => i.id === product.id); 
+      const cartItemKey = product.id;
+      const itemInCart = cart.value.find(i => i.cartKey === cartItemKey); 
       const currentQty = itemInCart ? itemInCart.qty : 0;
       if (currentQty >= (product.stock || 0)) { notify('error', 'Stok tidak mencukupi'); return; }
       
       if (itemInCart) itemInCart.qty += 1; 
-      else cart.value.push({ ...product, qty: 1 }); 
+      else cart.value.push({ ...product, cartKey: cartItemKey, baseId: product.id, qty: 1 }); 
       notify('success', `${product.name} ditambahkan`); 
     };
 
-    const getCartQty = (id) => { const item = cart.value.find(i => i.id === id); return item ? item.qty : 0; };
-    const updateQtyById = (id, delta) => { const idx = cart.value.findIndex(i => i.id === id); if(idx !== -1) updateQty(idx, delta); };
+    // Fungsi khusus untuk Overlay +/- di Kasir (Menghitung Total semua Varian dari 1 Produk Induk)
+    const getCartQtyByBaseId = (baseId) => { 
+      return cart.value.filter(i => (i.baseId || i.id) === baseId).reduce((sum, i) => sum + i.qty, 0); 
+    };
     
+    const reduceCartByBaseId = (baseId) => {
+       // Cari item terakhir di keranjang yang berasal dari baseId yang sama
+       const itemsWithBaseId = cart.value.map((item, index) => ({item, index})).filter(x => (x.item.baseId || x.item.id) === baseId);
+       if (itemsWithBaseId.length > 0) {
+          const targetIdx = itemsWithBaseId[itemsWithBaseId.length - 1].index;
+          updateQty(targetIdx, -1);
+       }
+    };
+
+    // Original updateQty functions
+    const updateQtyById = (id, delta) => { const idx = cart.value.findIndex(i => i.id === id); if(idx !== -1) updateQty(idx, delta); };
     const updateQty = (idx, delta) => { 
       const item = cart.value[idx]; if (!item) return; 
-      const productInDB = products.value.find(p => p.id === item.id);
+      const productInDB = products.value.find(p => p.id === (item.baseId || item.id));
       
       if (delta > 0 && item.qty >= (productInDB.stock || 0)) { notify('error', 'Stok tidak mencukupi'); return; }
 
@@ -838,6 +984,8 @@ createApp({
       trxs.forEach(t => {
         const parsed = parseItems(t.items);
         parsed.forEach(i => { 
+          // Pakai nama item yang murni (tanpa topping) agar data grouping lebih rapi jika diinginkan, 
+          // tapi di sini nama as-is agar topping terlihat sebagai item premium yg terpisah
           if (!itemMap[i.name]) itemMap[i.name] = { name: i.name, qty: 0 }; 
           itemMap[i.name].qty += Number(i.qty || 0); 
         });
@@ -863,9 +1011,6 @@ createApp({
 
     const generateWAURL = () => { let text = storeProfile.value.name.toUpperCase() + '\n'; text += new Date().toLocaleString('id-ID') + '\n'; text += '-----------------------------\n'; cart.value.forEach(item => { text += '- ' + item.name + ' ' + item.qty + ' x Rp ' + formatCurrency(item.price * item.qty) + '\n'; }); text += '-----------------------------\n'; if (diskon.value > 0) text += 'Diskon: -Rp ' + formatCurrency(diskon.value) + '\n'; text += 'TOTAL: Rp ' + formatCurrency(cartTotal.value) + '\n'; text += '-----------------------------\n'; text += formSettings.value.pesanfooter + '\nTerima kasih!'; let targetNum = customer.value.phone || storeProfile.value.phone || ''; if (targetNum.startsWith('0')) targetNum = '62' + targetNum.substring(1); else if (!targetNum.startsWith('62')) targetNum = '62' + targetNum; return 'https://wa.me/' + targetNum + '?text=' + encodeURIComponent(text); };
     
-    // =========================================================
-    // FUNGSI CRUD FIREBASE (JAUH LEBIH CEPAT & SIMPLE)
-    // =========================================================
     const processPayment = async (type) => {
       if (!cart.value.length) { notify('error', 'Keranjang masih kosong'); return; }
       const tempId = generateId('TRX'); 
@@ -874,23 +1019,21 @@ createApp({
         tanggal: new Date().toISOString(), customerName: customer.value.name, customerPhone: customer.value.phone, 
         subtotal: cartSubtotal.value, diskon: Number(diskon.value || 0), total: cartTotal.value, hppTotal: cartHppTotal.value, 
         metodeBayar: metodeBayar.value, bayar: cartTotal.value, kembalian: 0, catatan: catatanOrder.value, 
-        kasir: userRole.value, // Catat siapa yang transaksi
-        items: cart.value.map(i => ({ id: i.id, name: i.name, qty: Number(i.qty), price: Number(i.price), hpp: Number(i.hpp || 0) })) 
+        kasir: userRole.value, 
+        items: cart.value.map(i => ({ id: i.id, baseId: i.baseId || i.id, name: i.name, qty: Number(i.qty), price: Number(i.price), hpp: Number(i.hpp || 0) })) 
       };
       
       let updates = {};
       updates['warungkas/transactions/' + tempId] = payload;
 
-      // Fitur Enterprise: Potong Stok Otomatis
       cart.value.forEach(item => {
-        const productInDB = products.value.find(p => p.id === item.id);
+        const productInDB = products.value.find(p => p.id === (item.baseId || item.id));
         if (productInDB) {
           const newStock = Math.max(0, (productInDB.stock || 0) - item.qty);
-          updates[`warungkas/products/${item.id}/stock`] = newStock;
+          updates[`warungkas/products/${productInDB.id}/stock`] = newStock;
         }
       });
 
-      // Eksekusi semua perubahan ke DB sekaligus
       db.ref().update(updates);
       
       if (type === 'wa') window.open(generateWAURL(), '_blank');
@@ -904,12 +1047,12 @@ createApp({
       let updates = {};
       updates['warungkas/transactions/' + trx.id] = null;
       
-      // Kembalikan Stok
       const items = parseItems(trx.items);
       items.forEach(item => {
-        const productInDB = products.value.find(p => p.id === item.id);
+        const baseId = item.baseId || item.id;
+        const productInDB = products.value.find(p => p.id === baseId);
         if (productInDB) {
-          updates[`warungkas/products/${item.id}/stock`] = (productInDB.stock || 0) + item.qty;
+          updates[`warungkas/products/${baseId}/stock`] = (productInDB.stock || 0) + item.qty;
         }
       });
 
@@ -923,15 +1066,16 @@ createApp({
       updates['warungkas/transactions/' + trx.id] = null;
       const items = parseItems(trx.items);
       items.forEach(item => {
-        const productInDB = products.value.find(p => p.id === item.id);
-        if (productInDB) updates[`warungkas/products/${item.id}/stock`] = (productInDB.stock || 0) + item.qty;
+        const baseId = item.baseId || item.id;
+        const productInDB = products.value.find(p => p.id === baseId);
+        if (productInDB) updates[`warungkas/products/${baseId}/stock`] = (productInDB.stock || 0) + item.qty;
       });
       db.ref().update(updates);
 
       cart.value = [...items]; customer.value = { name: trx.customerName || '', phone: trx.customerPhone || '' }; diskon.value = trx.diskon || 0; metodeBayar.value = trx.metodeBayar || 'Cash'; catatanOrder.value = trx.catatan || ''; changeTab('kasir'); notify('info', 'Silakan ubah pesanan di Keranjang'); } }); 
     };
 
-    const openProductModal = (p = null) => { formProduct.value = p ? { ...p } : { id: null, name: '', category: 'Makanan', price: 0, hpp: 0, stock: 100, icon: '📦', status: 'aktif' }; showProductModal.value = true; };
+    const openProductModal = (p = null) => { formProduct.value = p ? { ...p } : { id: null, name: '', category: 'Makanan', price: 0, hpp: 0, stock: 100, icon: '📦', status: 'aktif', variants: '' }; showProductModal.value = true; };
     const saveProduct = async () => { 
       if (!formProduct.value.name || Number(formProduct.value.price) <= 0) { notify('error', 'Nama dan harga wajib diisi'); return; } 
       const payload = { ...formProduct.value }; if (!payload.id) payload.id = generateId('PRD'); 
@@ -977,7 +1121,6 @@ createApp({
       }
     };
 
-    // FITUR ENTERPRISE: TUTUP SHIFT KASIR
     const closeShift = () => {
       const hariIni = new Date().toLocaleDateString('id-ID');
       const teks = `REKAP KASIR HARI INI (${hariIni})\n\n` +
@@ -997,7 +1140,6 @@ createApp({
       });
     };
     
-    // EXPORT EXCEL DARI DATA LOKAL YG SUDAH REALTIME
     const exportDataExcel = () => { 
       const wb = XLSX.utils.book_new(); 
       const wsProducts = XLSX.utils.json_to_sheet(products.value); 
@@ -1045,7 +1187,6 @@ createApp({
       updateClock(); setInterval(updateClock, 1000); 
       loadData(); 
 
-      // Listener untuk mereset timer saat ada aktivitas kasir
       window.addEventListener('mousemove', resetIdleTimer);
       window.addEventListener('keydown', resetIdleTimer);
       window.addEventListener('touchstart', resetIdleTimer);
@@ -1060,9 +1201,10 @@ createApp({
 
     return {
       isLoadingSystem, systemError, retryLoad, isLoggedIn, pin, loginError, appendPin, removePin, clearPin, logout,
-      currentTab, historyTab, changeTab, getTabIcon, currentDateTime, liveClock, formatCurrency, formatDateTime, cart, addToCart, getCartQty, updateQty, updateQtyById, clearCart,
+      currentTab, historyTab, changeTab, getTabIcon, currentDateTime, liveClock, formatCurrency, formatDateTime, cart, addToCart, getCartQty, updateQty, updateQtyById, clearCart, getCartQtyByBaseId, reduceCartByBaseId, handleProductClick,
       cartTotalItems, cartSubtotal, cartTotal, diskon, metodeBayar, catatanOrder, processPayment, customer, parseItems,
       showCartModal, products, filteredProducts, filteredCatalog, searchQuery, activeCategory, categories, availableCategories, showProductModal, openProductModal, saveProduct, deleteProduct, formProduct,
+      showVariantModal, selectedProductForVariant, selectedVariants, parsedVariantsList, variantTotalPrice, addVariantToCart,
       showExpenseModal, formExpense, saveExpense, deleteExpense, addExpenseItem, removeExpenseItem, expenseTotal, dashboardInsight, lowStockProducts, closeShift,
       reportFilter, filteredReport, filteredTransactions, filteredExpenses, dashboardStats, topSoldToday,
       storeProfile, formSettings, saveSettings, isSavingSettings, exportDataExcel, importDataExcel, handleLogoUpload,
