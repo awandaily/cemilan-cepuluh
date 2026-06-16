@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>WarungKas POS Enterprise</title>
+  <title>Cemilan Cepuluh POS</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,8 +13,10 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
   <script>
     tailwind.config = {
@@ -55,13 +57,13 @@
 
   <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center animate-fade-in">
     <div class="loader mb-4"></div>
-    <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan ke API Cloud...</p>
-    <span class="mt-8 text-[10px] text-gray-400">WarungKas Vercel Edition</span>
+    <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan Database Cloud...</p>
+    <span class="mt-8 text-[10px] text-gray-400">WarungKas Firebase Edition</span>
   </div>
 
   <div v-else-if="systemError" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
     <i class="ph-fill ph-warning-circle text-red-500 text-7xl mb-4"></i>
-    <h2 class="text-xl font-bold text-secondary mb-2">Koneksi API Gagal</h2>
+    <h2 class="text-xl font-bold text-secondary mb-2">Database Error</h2>
     <p class="text-xs text-gray-500 mb-4 bg-red-50 p-4 rounded-xl border border-red-100 text-left font-mono break-words w-full">{{ systemError }}</p>
     <button @click="retryLoad" class="bg-primary text-white font-bold px-8 py-3 rounded-2xl shadow-md active:scale-95 transition-transform flex items-center gap-2 mb-4">
       <i class="ph-bold ph-arrows-clockwise"></i> Coba Lagi
@@ -85,7 +87,7 @@
     </div>
 
     <p v-if="loginError" class="mt-6 text-red-200 bg-red-900/30 px-4 py-2 rounded-xl text-sm animate-fade-in">{{ loginError }}</p>
-    <p v-else class="mt-6 text-white/50 text-xs">PIN diatur di Pengaturan</p>
+    <p v-else class="mt-6 text-white/50 text-xs">PIN default: 1234</p>
   </div>
 
   <template v-else>
@@ -97,10 +99,9 @@
           {{ storeProfile.name }}
         </h1>
         <div class="mt-1.5 flex items-center gap-2">
-          <button @click="forceSync" :disabled="isSyncing" class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[9px] px-2 py-0.5 rounded-full font-bold active:scale-95 transition-transform disabled:opacity-70">
-            <i class="ph-bold ph-arrows-clockwise" :class="{'animate-spin': isSyncing}"></i>
-            {{ isSyncing ? 'Sinkronisasi...' : 'Sync Data' }}
-          </button>
+          <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-[9px] px-2 py-0.5 rounded-full font-bold">
+            <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Cloud Active
+          </span>
           <span class="text-[10px] font-medium text-gray-500">{{ currentDateTime }}</span>
         </div>
       </div>
@@ -355,17 +356,6 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-3xl shadow-soft border border-gray-50 overflow-hidden">
-            <div class="p-4 border-b border-gray-50 flex items-center gap-3">
-              <div class="bg-green-50 text-green-600 p-2 rounded-xl"><i class="ph-fill ph-microsoft-excel-logo text-xl"></i></div>
-              <h3 class="font-bold text-secondary">Data Backup Excel</h3>
-            </div>
-            <div class="p-2 space-y-1">
-              <button @click="exportDataExcel" class="w-full text-left px-4 py-3 hover:bg-gray-50 flex justify-between items-center rounded-xl transition-colors"><span class="text-sm font-medium">Export Semua Data Excel</span><i class="ph-bold ph-download-simple text-gray-400"></i></button>
-              <label class="w-full text-left px-4 py-3 hover:bg-gray-50 flex justify-between items-center rounded-xl transition-colors cursor-pointer"><span class="text-sm font-medium">Import Data Excel</span><i class="ph-bold ph-upload-simple text-gray-400"></i><input type="file" accept=".xlsx,.xls" class="hidden" @change="importDataExcel"></label>
-            </div>
-          </div>
-
           <button @click="logout" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold shadow-sm border border-red-100 flex items-center justify-center gap-2">
             <i class="ph-bold ph-sign-out text-lg"></i> Keluar Kasir
           </button>
@@ -515,7 +505,30 @@
 </div>
 
 <script>
-const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+// =========================================================
+// SCRIPT FIREBASE INITIALIZATION 
+// =========================================================
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA1wiHFHpADLUaZas0AqNMLnmo6rgbPvZg",
+  authDomain: "cemilan-cepuluh.firebaseapp.com",
+  databaseURL: "https://cemilan-cepuluh-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cemilan-cepuluh",
+  storageBucket: "cemilan-cepuluh.firebasestorage.app",
+  messagingSenderId: "891392027777",
+  appId: "1:891392027777:web:3db40e8b3b1403091e7180",
+  measurementId: "G-EHVJ2LXLYF"
+};
+
+let db;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch (e) {
+  console.warn("Firebase belum di-setup dengan benar.");
+}
+
+const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
   setup() {
@@ -531,8 +544,6 @@ createApp({
     const showExpenseModal = ref(false);
     const showDateFilterModal = ref(false);
     const isSavingSettings = ref(false);
-    const isSyncing = ref(false); 
-    const syncInterval = ref(null); 
 
     const cart = ref([]);
     const transactions = ref([]);
@@ -567,10 +578,7 @@ createApp({
       return r.isConfirmed;
     };
 
-    // Fungsi pembuat UUID (Mencegah Tabrakan Saat Transaksi Bersamaan)
-    const generateId = (prefix) => {
-      return prefix + '-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-    };
+    const generateId = (prefix) => prefix + '-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
 
     const updateClock = () => { 
       const now = new Date();
@@ -580,85 +588,51 @@ createApp({
 
     const formatCurrency = (val) => new Intl.NumberFormat('id-ID').format(Number(val || 0));
     const formatDateTime = (val) => { if (!val) return '-'; return new Date(val).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }); };
-    
-    const getTabIcon = (tab) => {
-      const map = { dashboard: 'ph-house', kasir: 'ph-calculator', produk: 'ph-package', laporan: 'ph-chart-pie-slice', pengaturan: 'ph-gear' };
-      return map[tab] || 'ph-circle';
-    };
-
+    const getTabIcon = (tab) => { const map = { dashboard: 'ph-house', kasir: 'ph-calculator', produk: 'ph-package', laporan: 'ph-chart-pie-slice', pengaturan: 'ph-gear' }; return map[tab] || 'ph-circle'; };
     const changeTab = (tab) => { currentTab.value = tab; searchQuery.value = ''; activeCategory.value = 'Semua'; };
-
-    // =========================================================
-    // API CALL KE GOOGLE APPS SCRIPT
-    // =========================================================
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6iOiW76esvubkiSw_htBefvebwUaM1CrUBwgwGuu80QQJOB2Rrf4WSSM5JgmSP4F0/exec';
-
-    const callApi = async (action, payload = {}) => {
-      try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
-          },
-          body: JSON.stringify({ action: action, payload: payload })
-        });
-        return await response.json();
-      } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-      }
-    };
 
     const parseItems = (items) => {
       if (Array.isArray(items)) return items;
       try { return typeof items === 'string' ? JSON.parse(items || '[]') : []; } catch(e) { return []; }
     };
 
-    const syncData = async (silent = true) => {
-      if (isSyncing.value) return;
-      isSyncing.value = true;
-      try {
-        const res = await callApi('GET_ALL_DATA');
-        if (res && res.success) {
-          products.value = res.data.products || products.value;
-          transactions.value = (res.data.transactions || transactions.value).map(t => ({...t, items: parseItems(t.items)}));
-          expenses.value = res.data.expenses || expenses.value;
-          
-          localStorage.setItem('wkprod', JSON.stringify(products.value));
-          localStorage.setItem('wktrx', JSON.stringify(transactions.value));
-          localStorage.setItem('wkexp', JSON.stringify(expenses.value));
-
-          if (!silent) notify('success', 'Data tersinkronisasi!');
-        }
-      } catch (e) {
-        if (!silent) notify('error', 'Gagal menyinkronkan data.');
-      } finally {
-        isSyncing.value = false;
-      }
-    };
-
-    const forceSync = () => syncData(false);
-
-    const loadData = async () => {
-      isLoadingSystem.value = true; systemError.value = '';
-      try {
-        const savedTrx = localStorage.getItem('wktrx'); const savedExp = localStorage.getItem('wkexp');
-        const savedProd = localStorage.getItem('wkprod'); const savedSettings = localStorage.getItem('wksettings');
-
-        if (savedTrx) transactions.value = JSON.parse(savedTrx).map(t => ({...t, items: parseItems(t.items)}));
-        if (savedExp) expenses.value = JSON.parse(savedExp);
-        if (savedProd) products.value = JSON.parse(savedProd);
-        else products.value = [{ id: generateId('PRD'), name: 'Sosis Bakar Besar', category: 'Cemilan', price: 12000, hpp: 6000, icon: '🌭', status: 'aktif' }];
-        
-        if (savedSettings) {
-          const s = JSON.parse(savedSettings); formSettings.value = { ...formSettings.value, ...s };
-          storeProfile.value.name = s.namawarung || storeProfile.value.name; storeProfile.value.phone = s.nowawarung || ''; storeProfile.value.logo = s.logo || '';
-          activePin.value = String(s.pin || activePin.value);
-        }
-
-        await syncData(true);
+    // =========================================================
+    // LISTENER FIREBASE REALTIME
+    // =========================================================
+    const loadData = () => {
+      if (!db) {
+        systemError.value = "Firebase Error: Gagal menghubungkan ke server.";
         isLoadingSystem.value = false;
-      } catch (e) { systemError.value = e.message || 'Gagal memuat API'; isLoadingSystem.value = false; }
+        return;
+      }
+
+      isLoadingSystem.value = true; systemError.value = '';
+      
+      db.ref('warungkas').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        
+        products.value = data.products ? Object.values(data.products) : [];
+        transactions.value = data.transactions ? Object.values(data.transactions).map(t => ({...t, items: parseItems(t.items)})) : [];
+        expenses.value = data.expenses ? Object.values(data.expenses) : [];
+        
+        if (data.settings) {
+          formSettings.value = { ...formSettings.value, ...data.settings };
+          storeProfile.value.name = data.settings.namawarung || 'WarungKas';
+          storeProfile.value.phone = data.settings.nowawarung || '';
+          storeProfile.value.logo = data.settings.logo || '';
+          activePin.value = String(data.settings.pin || '1234');
+        } else {
+          if(products.value.length === 0) {
+             const dummy = { id: generateId('PRD'), name: 'Sosis Bakar Besar', category: 'Cemilan', price: 12000, hpp: 6000, icon: '🌭', status: 'aktif' };
+             db.ref('warungkas/products/' + dummy.id).set(dummy);
+          }
+        }
+        
+        isLoadingSystem.value = false;
+      }, (error) => {
+        systemError.value = "Gagal terhubung ke Database: " + error.message;
+        isLoadingSystem.value = false;
+      });
     };
 
     const retryLoad = () => loadData();
@@ -741,41 +715,38 @@ createApp({
 
     const generateWAURL = () => { let text = storeProfile.value.name.toUpperCase() + '\n'; text += new Date().toLocaleString('id-ID') + '\n'; text += '-----------------------------\n'; cart.value.forEach(item => { text += '- ' + item.name + ' ' + item.qty + ' x Rp ' + formatCurrency(item.price * item.qty) + '\n'; }); text += '-----------------------------\n'; if (diskon.value > 0) text += 'Diskon: -Rp ' + formatCurrency(diskon.value) + '\n'; text += 'TOTAL: Rp ' + formatCurrency(cartTotal.value) + '\n'; text += '-----------------------------\n'; text += formSettings.value.pesanfooter + '\nTerima kasih!'; let targetNum = customer.value.phone || storeProfile.value.phone || ''; if (targetNum.startsWith('0')) targetNum = '62' + targetNum.substring(1); else if (!targetNum.startsWith('62')) targetNum = '62' + targetNum; return 'https://wa.me/' + targetNum + '?text=' + encodeURIComponent(text); };
     
+    // =========================================================
+    // FUNGSI CRUD FIREBASE (JAUH LEBIH CEPAT & SIMPLE)
+    // =========================================================
     const processPayment = async (type) => {
       if (!cart.value.length) { notify('error', 'Keranjang masih kosong'); return; }
-      
+      const tempId = generateId('TRX'); 
       const payload = { 
-        tanggal: new Date().toISOString(), 
-        customerName: customer.value.name, 
-        customerPhone: customer.value.phone, 
-        subtotal: cartSubtotal.value, 
-        diskon: Number(diskon.value || 0), 
-        total: cartTotal.value, 
-        hppTotal: cartHppTotal.value, 
-        metodeBayar: metodeBayar.value, 
-        bayar: cartTotal.value, 
-        kembalian: 0, 
-        catatan: catatanOrder.value, 
+        id: tempId,
+        tanggal: new Date().toISOString(), customerName: customer.value.name, customerPhone: customer.value.phone, 
+        subtotal: cartSubtotal.value, diskon: Number(diskon.value || 0), total: cartTotal.value, hppTotal: cartHppTotal.value, 
+        metodeBayar: metodeBayar.value, bayar: cartTotal.value, kembalian: 0, catatan: catatanOrder.value, 
         items: cart.value.map(i => ({ id: i.id, name: i.name, qty: Number(i.qty), price: Number(i.price), hpp: Number(i.hpp || 0) })) 
       };
       
-      // Gunakan generateId() yang jauh lebih aman dari collision
-      const tempId = generateId('TRX'); 
-      transactions.value.push({ ...payload, id: tempId }); 
-      localStorage.setItem('wktrx', JSON.stringify(transactions.value));
-      
-      callApi('SAVE_TRANSACTION', { ...payload, id: tempId }).then(() => { syncData(true); });
+      // Simpan Instan ke Firebase
+      db.ref('warungkas/transactions/' + tempId).set(payload);
       
       if (type === 'wa') window.open(generateWAURL(), '_blank');
-      cart.value = []; customer.value = { name: '', phone: '' }; diskon.value = 0; metodeBayar.value = 'Cash'; catatanOrder.value = ''; showCartModal.value = false; changeTab('dashboard'); notify('success', 'Transaksi berhasil disimpan');
+      cart.value = []; customer.value = { name: '', phone: '' }; diskon.value = 0; metodeBayar.value = 'Cash'; catatanOrder.value = ''; showCartModal.value = false; changeTab('dashboard'); notify('success', 'Transaksi berhasil dicatat');
     };
 
-    const deleteTransaction = async (id) => { const ok = await confirmAction('Hapus transaksi?', 'Data tidak bisa dikembalikan.'); if (!ok) return; transactions.value = transactions.value.filter(t => t.id !== id); localStorage.setItem('wktrx', JSON.stringify(transactions.value)); callApi('DELETE_TRANSACTION', { id }).then(()=> syncData(true)); notify('success', 'Transaksi dihapus'); };
-    const editTransaction = (trx) => { Swal.fire({ title: 'Edit (Retur) Struk?', text: 'Struk ini akan dibatalkan, lalu barangnya dikembalikan ke Keranjang.', icon: 'question', showCancelButton: true, confirmButtonColor: '#3b82f6', confirmButtonText: 'Ya, Ubah Pesanan' }).then(r => { if(r.isConfirmed) { transactions.value = transactions.value.filter(t => t.id !== trx.id); localStorage.setItem('wktrx', JSON.stringify(transactions.value)); callApi('DELETE_TRANSACTION', { id: trx.id }).then(()=> syncData(true)); cart.value = [...parseItems(trx.items)]; customer.value = { name: trx.customerName || '', phone: trx.customerPhone || '' }; diskon.value = trx.diskon || 0; metodeBayar.value = trx.metodeBayar || 'Cash'; catatanOrder.value = trx.catatan || ''; changeTab('kasir'); notify('info', 'Silakan ubah pesanan di Keranjang'); } }); };
+    const deleteTransaction = async (id) => { const ok = await confirmAction('Hapus transaksi?', 'Data tidak bisa dikembalikan.'); if (!ok) return; db.ref('warungkas/transactions/' + id).remove(); notify('success', 'Transaksi dihapus'); };
+    const editTransaction = (trx) => { Swal.fire({ title: 'Edit (Retur) Struk?', text: 'Struk ini akan dibatalkan, lalu barangnya dikembalikan ke Keranjang.', icon: 'question', showCancelButton: true, confirmButtonColor: '#3b82f6', confirmButtonText: 'Ya, Ubah Pesanan' }).then(r => { if(r.isConfirmed) { db.ref('warungkas/transactions/' + trx.id).remove(); cart.value = [...parseItems(trx.items)]; customer.value = { name: trx.customerName || '', phone: trx.customerPhone || '' }; diskon.value = trx.diskon || 0; metodeBayar.value = trx.metodeBayar || 'Cash'; catatanOrder.value = trx.catatan || ''; changeTab('kasir'); notify('info', 'Silakan ubah pesanan di Keranjang'); } }); };
 
     const openProductModal = (p = null) => { formProduct.value = p ? { ...p } : { id: null, name: '', category: 'Makanan', price: 0, hpp: 0, icon: '📦', status: 'aktif' }; showProductModal.value = true; };
-    const saveProduct = async () => { if (!formProduct.value.name || Number(formProduct.value.price) <= 0) { notify('error', 'Nama dan harga wajib diisi'); return; } const payload = { ...formProduct.value }; if (!payload.id) payload.id = generateId('PRD'); const idx = products.value.findIndex(x => x.id === payload.id); if (idx !== -1) products.value[idx] = { ...payload }; else products.value.push({ ...payload }); localStorage.setItem('wkprod', JSON.stringify(products.value)); callApi('SAVE_PRODUCT', payload).then(()=> syncData(true)); showProductModal.value = false; notify('success', 'Menu berhasil disimpan'); };
-    const deleteProduct = async (id) => { const ok = await confirmAction('Hapus produk?', 'Produk akan dihapus dari daftar.'); if (!ok) return; products.value = products.value.filter(p => p.id !== id); localStorage.setItem('wkprod', JSON.stringify(products.value)); callApi('DELETE_PRODUCT', { id }).then(()=> syncData(true)); showProductModal.value = false; notify('success', 'Produk dihapus'); };
+    const saveProduct = async () => { 
+      if (!formProduct.value.name || Number(formProduct.value.price) <= 0) { notify('error', 'Nama dan harga wajib diisi'); return; } 
+      const payload = { ...formProduct.value }; if (!payload.id) payload.id = generateId('PRD'); 
+      db.ref('warungkas/products/' + payload.id).set(payload); 
+      showProductModal.value = false; notify('success', 'Menu berhasil disimpan'); 
+    };
+    const deleteProduct = async (id) => { const ok = await confirmAction('Hapus produk?', 'Produk akan dihapus dari daftar.'); if (!ok) return; db.ref('warungkas/products/' + id).remove(); showProductModal.value = false; notify('success', 'Produk dihapus'); };
 
     const addExpenseItem = () => formExpense.value.items.push({ keterangan: '', nominal: null });
     const removeExpenseItem = (idx) => formExpense.value.items.splice(idx, 1);
@@ -785,48 +756,42 @@ createApp({
       const validItems = formExpense.value.items.filter(i => i.keterangan && Number(i.nominal) > 0);
       if (validItems.length === 0) return notify('error', 'Masukkan minimal 1 pengeluaran');
       const baseTanggal = new Date();
+      
+      let updates = {};
       validItems.forEach((item, index) => {
         const d = new Date(baseTanggal.getTime() + index * 1000); 
-        const payload = { id: generateId('EXP'), tanggal: d.toISOString(), kategori: formExpense.value.kategori, nominal: Number(item.nominal), keterangan: item.keterangan };
-        expenses.value.push(payload);
-        callApi('SAVE_EXPENSE', payload).then(()=> syncData(true)); 
+        const eid = generateId('EXP');
+        updates[eid] = { id: eid, tanggal: d.toISOString(), kategori: formExpense.value.kategori, nominal: Number(item.nominal), keterangan: item.keterangan };
       });
-      localStorage.setItem('wkexp', JSON.stringify(expenses.value));
+      db.ref('warungkas/expenses').update(updates);
+      
       formExpense.value = { kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] };
       showExpenseModal.value = false;
       notify('success', `${validItems.length} Pengeluaran dicatat`);
     };
 
-    const deleteExpense = async (id) => { const ok = await confirmAction('Hapus pengeluaran?', 'Data pengeluaran akan dihapus permanen.'); if (!ok) return; expenses.value = expenses.value.filter(e => e.id !== id); localStorage.setItem('wkexp', JSON.stringify(expenses.value)); callApi('DELETE_EXPENSE', { id }).then(()=> syncData(true)); notify('success', 'Pengeluaran dihapus'); };
+    const deleteExpense = async (id) => { const ok = await confirmAction('Hapus pengeluaran?', 'Data pengeluaran akan dihapus permanen.'); if (!ok) return; db.ref('warungkas/expenses/' + id).remove(); notify('success', 'Pengeluaran dihapus'); };
 
-    const saveSettings = async () => { if (String(formSettings.value.pin).length !== 4 || isNaN(Number(formSettings.value.pin))) { notify('error', 'PIN harus 4 digit angka'); return; } isSavingSettings.value = true; try { const payload = { ...formSettings.value, pin: String(formSettings.value.pin) }; storeProfile.value.name = payload.namawarung; storeProfile.value.phone = payload.nowawarung; storeProfile.value.logo = payload.logo; activePin.value = payload.pin; localStorage.setItem('wksettings', JSON.stringify(payload)); callApi('SAVE_SETTINGS', payload).then(()=> syncData(true)); notify('success', 'Pengaturan disimpan'); } finally { isSavingSettings.value = false; } };
+    const saveSettings = async () => { 
+      if (String(formSettings.value.pin).length !== 4 || isNaN(Number(formSettings.value.pin))) { notify('error', 'PIN harus 4 digit angka'); return; } 
+      isSavingSettings.value = true; 
+      const payload = { ...formSettings.value, pin: String(formSettings.value.pin) }; 
+      try {
+        await db.ref('warungkas/settings').set(payload);
+        notify('success', 'Pengaturan disimpan'); 
+      } finally {
+        isSavingSettings.value = false; 
+      }
+    };
     
+    // EXPORT EXCEL DARI DATA LOKAL YG SUDAH REALTIME
     const exportDataExcel = () => { const wb = XLSX.utils.book_new(); const wsProducts = XLSX.utils.json_to_sheet(products.value); const wsTransactions = XLSX.utils.json_to_sheet(transactions.value.map(t => ({ ...t, items: JSON.stringify(t.items || []) }))); const wsExpenses = XLSX.utils.json_to_sheet(expenses.value); XLSX.utils.book_append_sheet(wb, wsProducts, 'Products'); XLSX.utils.book_append_sheet(wb, wsTransactions, 'Transactions'); XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses'); const fileName = 'WarungKas_Backup_' + Date.now() + '.xlsx'; XLSX.writeFile(wb, fileName); notify('success', 'Export Excel berhasil'); };
-    const importDataExcel = async (e) => { const file = e.target.files[0]; if (!file) return; try { const data = await file.arrayBuffer(); const wb = XLSX.read(data, { type: 'array' }); if (wb.SheetNames.includes('Products')) { products.value = XLSX.utils.sheet_to_json(wb.Sheets['Products']); } if (wb.SheetNames.includes('Transactions')) { transactions.value = XLSX.utils.sheet_to_json(wb.Sheets['Transactions']).map(t => ({ ...t, items: parseItems(t.items) })); } if (wb.SheetNames.includes('Expenses')) { expenses.value = XLSX.utils.sheet_to_json(wb.Sheets['Expenses']); } localStorage.setItem('wkprod', JSON.stringify(products.value)); localStorage.setItem('wktrx', JSON.stringify(transactions.value)); localStorage.setItem('wkexp', JSON.stringify(expenses.value)); syncData(true); notify('success', 'Import Excel berhasil'); } catch (err) { notify('error', 'File Excel tidak valid'); } finally { e.target.value = ''; } };
     
     const handleLogoUpload = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const MAX_WIDTH = 250; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); formSettings.value.logo = canvas.toDataURL('image/jpeg', 0.8); notify('success', 'Foto berhasil dipilih'); }; img.src = event.target.result; }; reader.readAsDataURL(file); };
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        syncData(true);
-      }
-    };
-
     onMounted(() => { 
-      loadData(); 
-      updateClock(); 
-      setInterval(updateClock, 1000); 
-      
-      syncInterval.value = setInterval(() => {
-        syncData(true);
-      }, 15000);
-
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-    });
-
-    onUnmounted(() => {
-      clearInterval(syncInterval.value);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      updateClock(); setInterval(updateClock, 1000); 
+      loadData(); // Langsung tarik dari Firebase
     });
 
     return {
@@ -836,9 +801,8 @@ createApp({
       showCartModal, products, filteredProducts, filteredCatalog, searchQuery, activeCategory, categories, availableCategories, showProductModal, openProductModal, saveProduct, deleteProduct, formProduct,
       showExpenseModal, formExpense, saveExpense, deleteExpense, addExpenseItem, removeExpenseItem, expenseTotal, dashboardInsight,
       reportFilter, filteredReport, filteredTransactions, filteredExpenses, dashboardStats, topSoldToday,
-      storeProfile, formSettings, saveSettings, isSavingSettings, exportDataExcel, importDataExcel, handleLogoUpload,
-      setReportFilter, openDateFilter, showDateFilterModal, dateFilter, applyDateFilter, resetDateFilter, tabs, deleteTransaction, editTransaction,
-      isSyncing, forceSync
+      storeProfile, formSettings, saveSettings, isSavingSettings, exportDataExcel, handleLogoUpload,
+      setReportFilter, openDateFilter, showDateFilterModal, dateFilter, applyDateFilter, resetDateFilter, tabs, deleteTransaction, editTransaction
     };
   }
 }).mount('#app');
