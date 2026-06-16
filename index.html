@@ -58,7 +58,7 @@
   <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center animate-fade-in">
     <div class="loader mb-4"></div>
     <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan ke Cloud...</p>
-    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.2 (Share WA Fix)</span>
+    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.3 Enterprise</span>
   </div>
 
   <div v-else-if="systemError" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -92,27 +92,26 @@
 
   <template v-else>
     <header class="bg-surface px-5 py-4 flex justify-between items-center sticky top-0 z-30 border-b border-gray-100 shadow-sm">
-      <div>
-        <h1 class="text-xl font-bold flex items-center gap-2 text-secondary tracking-tight">
-          <img v-if="storeProfile.logo" :src="storeProfile.logo" class="w-7 h-7 rounded-lg object-cover" />
-          <span v-else class="bg-primary text-white p-1.5 rounded-lg"><i class="ph-fill ph-storefront text-sm"></i></span>
-          {{ storeProfile.name }}
-        </h1>
-        <div class="mt-1.5 flex items-center gap-2">
-          <span v-if="isOnline" class="inline-flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-[9px] px-2 py-0.5 rounded-full font-bold">
-            <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Cloud
-          </span>
-          <span v-else class="inline-flex items-center gap-1 bg-red-100 text-red-700 border border-red-200 text-[9px] px-2 py-0.5 rounded-full font-bold">
-            <i class="ph-bold ph-wifi-slash"></i> Offline
-          </span>
-          <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">
-            <i class="ph-bold ph-user"></i> {{ userRole }}
-          </span>
+      <div class="flex items-center gap-3">
+        <img v-if="storeProfile.logo" :src="storeProfile.logo" class="w-10 h-10 rounded-xl object-cover" />
+        <div v-else class="bg-primary text-white p-2.5 rounded-xl"><i class="ph-fill ph-storefront text-lg"></i></div>
+        <div>
+          <h1 class="font-bold text-secondary tracking-tight leading-tight">{{ storeProfile.name || 'WarungKas' }}</h1>
+          <div class="mt-0.5 flex items-center gap-1.5">
+            <span v-if="isOnline" class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded-md font-bold"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Cloud</span>
+            <span v-else class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-[9px] px-1.5 py-0.5 rounded-md font-bold"><i class="ph-bold ph-wifi-slash"></i> Offline</span>
+            <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase"><i class="ph-bold ph-user"></i> {{ userRole }}</span>
+          </div>
         </div>
       </div>
-      <div class="text-right">
-        <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Jam Realtime</p>
-        <p class="text-sm font-bold text-primary">{{ liveClock }}</p>
+      <div class="flex items-center gap-3 text-right">
+        <div class="hidden sm:block">
+          <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Jam Realtime</p>
+          <p class="text-sm font-bold text-primary">{{ liveClock }}</p>
+        </div>
+        <button @click="logout" class="bg-red-50 text-red-500 p-2.5 rounded-xl hover:bg-red-100 active:scale-90 transition-all shadow-sm">
+          <i class="ph-bold ph-power text-xl"></i>
+        </button>
       </div>
     </header>
 
@@ -350,7 +349,6 @@
                 </div>
                 <div class="flex justify-end gap-2 border-t border-gray-50 pt-3 mt-1">
                   <button @click="editTransaction(trx)" class="text-[11px] font-semibold text-blue-500 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-pencil-simple"></i> Edit (Retur)</button>
-                  <button @click="deleteTransaction(trx)" class="text-[11px] font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-trash"></i> Hapus</button>
                 </div>
               </div>
               <div v-if="!filteredTransactions.length" class="text-center text-xs text-gray-400 py-6 bg-white rounded-2xl border border-dashed border-gray-200">Belum ada transaksi.</div>
@@ -395,9 +393,19 @@
                 </div>
               </div>
               <div><label class="text-xs text-gray-400 font-medium">Nama Warung</label><input v-model="formSettings.namawarung" type="text" class="w-full border-b border-gray-200 py-2 outline-none focus:border-primary font-medium"></div>
-              <div><label class="text-xs text-gray-400 font-medium">No. WA Admin</label><input v-model="formSettings.nowawarung" type="tel" class="w-full border-b border-gray-200 py-2 outline-none focus:border-primary font-medium"></div>
-              <div><label class="text-xs text-gray-400 font-medium">Pesan Footer Struk</label><input v-model="formSettings.pesanfooter" type="text" class="w-full border-b border-gray-200 py-2 outline-none focus:border-primary font-medium"></div>
               
+              <div class="bg-green-50 p-4 rounded-2xl border border-green-100 mt-2 space-y-3">
+                <p class="text-[10px] font-bold text-green-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-whatsapp-logo"></i> Setting Struk WhatsApp</p>
+                <div>
+                  <label class="text-[10px] text-gray-500 font-medium">Teks Pembuka (Header)</label>
+                  <textarea v-model="formSettings.waHeader" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-xs bg-white resize-none" placeholder="Halo! Berikut pesanan Anda:"></textarea>
+                </div>
+                <div>
+                  <label class="text-[10px] text-gray-500 font-medium">Teks Penutup (Footer)</label>
+                  <textarea v-model="formSettings.waFooter" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-xs bg-white resize-none" placeholder="Terima kasih sudah jajan!"></textarea>
+                </div>
+              </div>
+
               <div class="grid grid-cols-2 gap-3 pt-2">
                 <div class="bg-gray-50 p-3 rounded-2xl border border-gray-200">
                   <label class="text-[10px] text-gray-500 font-bold block mb-1"><i class="ph-fill ph-crown"></i> PIN Admin</label>
@@ -408,7 +416,6 @@
                   <input v-model="formSettings.pinKasir" type="number" maxlength="4" placeholder="0000" class="w-full bg-transparent outline-none font-bold tracking-widest text-secondary">
                 </div>
               </div>
-              <p class="text-[10px] text-gray-400">PIN Kasir tidak bisa buka Pengaturan & Laporan.</p>
 
               <button @click="saveSettings" :disabled="isSavingSettings" class="w-full bg-primary text-white py-3 rounded-xl font-bold active:scale-95 shadow-md flex items-center justify-center gap-2 disabled:opacity-70 mt-2">
                 <i class="ph-bold ph-floppy-disk"></i> {{ isSavingSettings ? 'Menyimpan...' : 'Simpan Pengaturan' }}
@@ -426,10 +433,6 @@
               <label class="w-full text-left px-4 py-3 hover:bg-gray-50 flex justify-between items-center rounded-xl transition-colors cursor-pointer"><span class="text-sm font-medium">Upload Excel ke Cloud</span><i class="ph-bold ph-upload-simple text-gray-400 text-lg"></i><input type="file" accept=".xlsx,.xls" class="hidden" @change="importDataExcel"></label>
             </div>
           </div>
-
-          <button @click="logout" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold shadow-sm border border-red-100 flex items-center justify-center gap-2">
-            <i class="ph-bold ph-sign-out text-lg"></i> Keluar (Lock Sesi)
-          </button>
         </div>
         
         <div v-else class="flex flex-col items-center justify-center py-20 animate-fade-in text-center px-4">
@@ -630,12 +633,13 @@
 
 <script>
 // =========================================================
-// SCRIPT FIREBASE INITIALIZATION
+// SCRIPT FIREBASE INITIALIZATION 
 // =========================================================
 
 const firebaseConfig = {
   apiKey: "AIzaSyA1wiHFHpADLUaZas0AqNMLnmo6rgbPvZg",
   authDomain: "cemilan-cepuluh.firebaseapp.com",
+  databaseURL: "https://cemilan-cepuluh-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "cemilan-cepuluh",
   storageBucket: "cemilan-cepuluh.firebasestorage.app",
   messagingSenderId: "891392027777",
@@ -657,11 +661,8 @@ createApp({
   setup() {
     const isLoadingSystem = ref(true);
     const systemError = ref('');
-    
-    // Fitur Multi-Role
     const isLoggedIn = ref(false);
     const userRole = ref(''); 
-    
     const pin = ref('');
     const loginError = ref('');
     const currentTab = ref('dashboard');
@@ -672,8 +673,6 @@ createApp({
     const showDateFilterModal = ref(false);
     const showVariantModal = ref(false);
     const isSavingSettings = ref(false);
-
-    // Fitur Enterprise: Koneksi Database
     const isOnline = ref(true);
 
     const cart = ref([]);
@@ -691,12 +690,11 @@ createApp({
     const metodeBayar = ref('Cash');
     const catatanOrder = ref('');
 
-    // State Topping
     const selectedProductForVariant = ref(null);
     const selectedVariants = ref([]);
 
     const storeProfile = ref({ name: 'WarungKas', phone: '', logo: '' });
-    const formSettings = ref({ namawarung: 'WarungKas', nowawarung: '', alamat: '', pesanfooter: 'Terima kasih sudah jajan!', pin: '1234', pinKasir: '0000', logo: '' });
+    const formSettings = ref({ namawarung: 'WarungKas', nowawarung: '', alamat: '', waHeader: 'Halo! Berikut detail pesanan Anda:', waFooter: 'Terima kasih sudah jajan!', pin: '1234', pinKasir: '0000', logo: '' });
     const activePin = ref('1234');
     const activePinKasir = ref('0000');
     
@@ -707,7 +705,6 @@ createApp({
     const currentDateTime = ref('');
     const tabs = ['dashboard', 'kasir', 'produk', 'laporan', 'pengaturan'];
 
-    // Auto-Lock Sesi (Idle Timeout 15 Menit)
     const IDLE_TIMEOUT_MS = 15 * 60 * 1000; 
     let idleTimer;
 
@@ -748,25 +745,13 @@ createApp({
       try { return typeof items === 'string' ? JSON.parse(items || '[]') : []; } catch(e) { return []; }
     };
 
-    // =========================================================
-    // LISTENER FIREBASE REALTIME
-    // =========================================================
     const loadData = () => {
-      if (!db) {
-        systemError.value = "Firebase Error: Gagal menghubungkan ke server.";
-        isLoadingSystem.value = false;
-        return;
-      }
-
+      if (!db) { systemError.value = "Firebase Error: Gagal menghubungkan ke server."; isLoadingSystem.value = false; return; }
       isLoadingSystem.value = true; systemError.value = '';
       
-      db.ref('.info/connected').on('value', (snap) => {
-        isOnline.value = snap.val() === true;
-      });
-      
+      db.ref('.info/connected').on('value', (snap) => { isOnline.value = snap.val() === true; });
       db.ref('warungkas').on('value', (snapshot) => {
         const data = snapshot.val() || {};
-        
         products.value = data.products ? Object.values(data.products) : [];
         transactions.value = data.transactions ? Object.values(data.transactions).map(t => ({...t, items: parseItems(t.items)})) : [];
         expenses.value = data.expenses ? Object.values(data.expenses) : [];
@@ -779,12 +764,8 @@ createApp({
           activePin.value = String(data.settings.pin || '1234');
           activePinKasir.value = String(data.settings.pinKasir || '0000');
         }
-        
         isLoadingSystem.value = false;
-      }, (error) => {
-        systemError.value = "Gagal terhubung ke Database: " + error.message;
-        isLoadingSystem.value = false;
-      });
+      }, (error) => { systemError.value = "Gagal terhubung ke Database: " + error.message; isLoadingSystem.value = false; });
     };
 
     const retryLoad = () => loadData();
@@ -792,32 +773,23 @@ createApp({
       if (pin.value.length >= 4) return; pin.value += String(n); loginError.value = '';
       if (pin.value.length === 4) {
         setTimeout(() => {
-          if (pin.value === String(activePin.value)) { 
-            isLoggedIn.value = true; userRole.value = 'admin'; resetIdleTimer(); notify('success', 'Login Admin'); 
-          } 
-          else if (pin.value === String(activePinKasir.value)) { 
-            isLoggedIn.value = true; userRole.value = 'kasir'; resetIdleTimer(); notify('success', 'Login Kasir'); 
-          }
+          if (pin.value === String(activePin.value)) { isLoggedIn.value = true; userRole.value = 'admin'; resetIdleTimer(); notify('success', 'Login Admin'); } 
+          else if (pin.value === String(activePinKasir.value)) { isLoggedIn.value = true; userRole.value = 'kasir'; resetIdleTimer(); notify('success', 'Login Kasir'); }
           else { loginError.value = 'PIN Salah!'; pin.value = ''; }
         }, 150);
       }
     };
     const removePin = () => { pin.value = pin.value.slice(0, -1); }; const clearPin = () => { pin.value = ''; };
-    const logout = async () => { const ok = await confirmAction('Keluar kasir?', 'Anda akan kembali ke layar login.'); if (!ok) return; isLoggedIn.value = false; userRole.value = ''; pin.value = ''; currentTab.value = 'dashboard'; clearTimeout(idleTimer); };
+    const logout = async () => { const ok = await confirmAction('Keluar aplikasi?', 'Layar akan dikunci otomatis.'); if (!ok) return; isLoggedIn.value = false; userRole.value = ''; pin.value = ''; currentTab.value = 'dashboard'; clearTimeout(idleTimer); };
 
     const availableCategories = computed(() => { const base = ['Makanan', 'Minuman', 'Cemilan', 'Paket', 'Lainnya']; const fromProducts = products.value.map(p => p.category).filter(Boolean); return [...new Set([...base, ...fromProducts])]; });
     const filteredProducts = computed(() => { return products.value.filter(p => { const catOk = activeCategory.value === 'Semua' || p.category === activeCategory.value; const searchOk = p.name.toLowerCase().includes(searchQuery.value.toLowerCase()); const statusOk = p.status !== 'nonaktif'; return catOk && searchOk && statusOk; }); });
     const filteredCatalog = computed(() => { return products.value.filter(p => p.name.toLowerCase().includes(searchQuery.value.toLowerCase())); });
 
-    // =========================================================
-    // LOGIKA TOPPING / VARIANT KE KERANJANG
-    // =========================================================
-    
     const parsedVariantsList = computed(() => {
       if (!selectedProductForVariant.value || !selectedProductForVariant.value.variants) return [];
       return selectedProductForVariant.value.variants.split(',').map(v => {
-        const [name, price] = v.split(':');
-        return { name: name ? name.trim() : '', price: Number(price) || 0 };
+        const [name, price] = v.split(':'); return { name: name ? name.trim() : '', price: Number(price) || 0 };
       }).filter(v => v.name);
     });
 
@@ -830,28 +802,17 @@ createApp({
 
     const handleProductClick = (item) => {
       if (item.stock <= 0) { notify('error', 'Stok Habis'); return; }
-      
       if (item.variants && item.variants.trim() !== '') {
-        selectedProductForVariant.value = item;
-        selectedVariants.value = []; 
-        showVariantModal.value = true;
-      } else {
-        addToCart(item);
-      }
+        selectedProductForVariant.value = item; selectedVariants.value = []; showVariantModal.value = true;
+      } else { addToCart(item); }
     };
 
     const addVariantToCart = () => {
       let finalPrice = Number(selectedProductForVariant.value.price);
       let extraNames = [];
-      selectedVariants.value.forEach(v => {
-        finalPrice += v.price;
-        extraNames.push(v.name);
-      });
-      
+      selectedVariants.value.forEach(v => { finalPrice += v.price; extraNames.push(v.name); });
       let finalName = selectedProductForVariant.value.name;
-      if (extraNames.length > 0) {
-        finalName += ` (+ ${extraNames.join(', ')})`;
-      }
+      if (extraNames.length > 0) { finalName += ` (+ ${extraNames.join(', ')})`; }
       
       const cartItemKey = selectedProductForVariant.value.id + extraNames.join('');
       const existingItem = cart.value.find(i => i.cartKey === cartItemKey);
@@ -861,68 +822,41 @@ createApp({
         existingItem.qty += 1;
       } else {
         if (getCartQtyByBaseId(selectedProductForVariant.value.id) >= (selectedProductForVariant.value.stock || 0)) { notify('error', 'Stok tidak mencukupi'); return; }
-        cart.value.push({
-          ...selectedProductForVariant.value,
-          cartKey: cartItemKey,
-          name: finalName,
-          price: finalPrice,
-          qty: 1,
-          baseId: selectedProductForVariant.value.id 
-        });
+        cart.value.push({ ...selectedProductForVariant.value, cartKey: cartItemKey, name: finalName, price: finalPrice, qty: 1, baseId: selectedProductForVariant.value.id });
       }
-      
-      showVariantModal.value = false;
-      notify('success', `${finalName} ditambahkan`);
+      showVariantModal.value = false; notify('success', `${finalName} ditambahkan`);
     };
 
     const addToCart = (product) => { 
-      const cartItemKey = product.id;
-      const itemInCart = cart.value.find(i => i.cartKey === cartItemKey); 
-      
+      const cartItemKey = product.id; const itemInCart = cart.value.find(i => i.cartKey === cartItemKey); 
       if (getCartQtyByBaseId(product.id) >= (product.stock || 0)) { notify('error', 'Stok tidak mencukupi'); return; }
-      
       if (itemInCart) itemInCart.qty += 1; 
       else cart.value.push({ ...product, cartKey: cartItemKey, baseId: product.id, qty: 1 }); 
       notify('success', `${product.name} ditambahkan`); 
     };
 
-    const getCartQty = (id) => { 
-      const item = cart.value.find(i => i.id === id || i.cartKey === id); 
-      return item ? item.qty : 0; 
-    };
-
-    const getCartQtyByBaseId = (baseId) => { 
-      return cart.value.filter(i => (i.baseId || i.id) === baseId).reduce((sum, i) => sum + i.qty, 0); 
-    };
-    
+    const getCartQty = (id) => { const item = cart.value.find(i => i.id === id || i.cartKey === id); return item ? item.qty : 0; };
+    const getCartQtyByBaseId = (baseId) => { return cart.value.filter(i => (i.baseId || i.id) === baseId).reduce((sum, i) => sum + i.qty, 0); };
     const reduceCartByBaseId = (baseId) => {
        const itemsWithBaseId = cart.value.map((item, index) => ({item, index})).filter(x => (x.item.baseId || x.item.id) === baseId);
-       if (itemsWithBaseId.length > 0) {
-          const targetIdx = itemsWithBaseId[itemsWithBaseId.length - 1].index;
-          updateQty(targetIdx, -1);
-       }
+       if (itemsWithBaseId.length > 0) { const targetIdx = itemsWithBaseId[itemsWithBaseId.length - 1].index; updateQty(targetIdx, -1); }
     };
 
     const updateQtyById = (id, delta) => { const idx = cart.value.findIndex(i => (i.cartKey || i.id) === id); if(idx !== -1) updateQty(idx, delta); };
-    
     const updateQty = (idx, delta) => { 
       const item = cart.value[idx]; if (!item) return; 
       const productInDB = products.value.find(p => p.id === (item.baseId || item.id));
-      
       if (delta > 0 && getCartQtyByBaseId(item.baseId || item.id) >= (productInDB.stock || 0)) { notify('error', 'Stok tidak mencukupi'); return; }
-
       item.qty += delta; 
       if (item.qty <= 0) cart.value.splice(idx, 1); 
       if (!cart.value.length) showCartModal.value = false; 
     };
-
     const clearCart = () => { Swal.fire({ title: 'Batalkan Transaksi?', text: 'Semua pesanan di keranjang akan dihapus.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#f3f4f6', cancelButtonText: '<span style="color:black">Tidak</span>', confirmButtonText: 'Ya, Batalkan' }).then((r) => { if (r.isConfirmed) { cart.value = []; customer.value = { name: '', phone: '' }; diskon.value = 0; catatanOrder.value = ''; showCartModal.value = false; notify('info', 'Transaksi dibatalkan'); } }); };
 
     const cartSubtotal = computed(() => cart.value.reduce((s, i) => s + Number(i.price || 0) * Number(i.qty || 0), 0));
     const cartHppTotal = computed(() => cart.value.reduce((s, i) => s + Number(i.hpp || 0) * Number(i.qty || 0), 0));
     const cartTotal = computed(() => Math.max(0, cartSubtotal.value - Number(diskon.value || 0)));
     const cartTotalItems = computed(() => cart.value.reduce((s, i) => s + Number(i.qty || 0), 0));
-
     const lowStockProducts = computed(() => products.value.filter(p => p.stock <= 5 && p.status !== 'nonaktif'));
 
     const isWithinFilter = (dateStr) => {
@@ -947,19 +881,9 @@ createApp({
     });
 
     const topSoldToday = computed(() => {
-      const trxs = filteredTransactions.value;
-      const itemMap = {};
-      trxs.forEach(t => {
-        const parsed = parseItems(t.items);
-        parsed.forEach(i => { 
-          // Pakai nama item yang murni (tanpa topping) agar data grouping lebih rapi
-          const cleanName = i.name.split(' (+')[0];
-          if (!itemMap[cleanName]) itemMap[cleanName] = { name: cleanName, qty: 0 }; 
-          itemMap[cleanName].qty += Number(i.qty || 0); 
-        });
-      });
-      const sorted = Object.values(itemMap).sort((a, b) => b.qty - a.qty).slice(0, 5);
-      const maxQty = sorted.length ? Math.max(...sorted.map(x => x.qty)) : 0;
+      const trxs = filteredTransactions.value; const itemMap = {};
+      trxs.forEach(t => { const parsed = parseItems(t.items); parsed.forEach(i => { const cleanName = i.name.split(' (+')[0]; if (!itemMap[cleanName]) itemMap[cleanName] = { name: cleanName, qty: 0 }; itemMap[cleanName].qty += Number(i.qty || 0); }); });
+      const sorted = Object.values(itemMap).sort((a, b) => b.qty - a.qty).slice(0, 5); const maxQty = sorted.length ? Math.max(...sorted.map(x => x.qty)) : 0;
       return sorted.map(x => ({ ...x, pct: maxQty > 0 ? (x.qty / maxQty) * 100 : 0 }));
     });
 
@@ -977,9 +901,11 @@ createApp({
     const applyDateFilter = () => { if (!dateFilter.value.start) { notify('error', 'Tanggal belum dipilih'); return; } reportFilter.value.mode = 'range'; reportFilter.value.start = dateFilter.value.start; reportFilter.value.end = dateFilter.value.mode === 'range' ? (dateFilter.value.end || dateFilter.value.start) : dateFilter.value.start; showDateFilterModal.value = false; notify('success', 'Filter tanggal diterapkan'); };
     const resetDateFilter = () => { reportFilter.value = { mode: 'all', start: '', end: '' }; showDateFilterModal.value = false; notify('success', 'Filter direset'); };
 
-    // FUNGSI SHARE KE APLIKASI WHATSAPP HP (TANPA NOMOR SPESIFIK)
+    // =========================================================
+    // BUG FIX WA FORWARD
+    // =========================================================
     const generateWAURL = () => { 
-      let text = storeProfile.value.name.toUpperCase() + '\n'; 
+      let text = (formSettings.value.waHeader || 'Halo! Berikut detail pesanan Anda:') + '\n'; 
       text += new Date().toLocaleString('id-ID') + '\n'; 
       text += '-----------------------------\n'; 
       cart.value.forEach(item => { text += '- ' + item.name + ' ' + item.qty + ' x Rp ' + formatCurrency(item.price * item.qty) + '\n'; }); 
@@ -987,23 +913,22 @@ createApp({
       if (diskon.value > 0) text += 'Diskon: -Rp ' + formatCurrency(diskon.value) + '\n'; 
       text += 'TOTAL: Rp ' + formatCurrency(cartTotal.value) + '\n'; 
       text += '-----------------------------\n'; 
-      text += formSettings.value.pesanfooter + '\nTerima kasih!'; 
+      text += (formSettings.value.waFooter || 'Terima kasih sudah jajan!'); 
 
+      const encodedText = encodeURIComponent(text);
       let targetNum = customer.value.phone || ''; 
 
-      if (targetNum) {
+      if (targetNum && targetNum.trim() !== '') {
         if (targetNum.startsWith('0')) targetNum = '62' + targetNum.substring(1);
         else if (!targetNum.startsWith('62') && !targetNum.startsWith('+62')) targetNum = '62' + targetNum;
-        return 'https://api.whatsapp.com/send?phone=' + targetNum.replace('+', '') + '&text=' + encodeURIComponent(text);
+        targetNum = targetNum.replace('+', '');
+        return `https://wa.me/${targetNum}?text=${encodedText}`;
       } else {
-        // Membuka fitur "Teruskan / Forward" ke kontak di aplikasi WA jika kolom no pelanggan kosong
-        return 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text);
+        // Jika tidak ada nomor telepon, gunakan format API agar HP memunculkan halaman "Kirim ke Kontak"
+        return `https://api.whatsapp.com/send?text=${encodedText}`;
       }
     };
     
-    // =========================================================
-    // FUNGSI CRUD FIREBASE 
-    // =========================================================
     const processPayment = async (type) => {
       if (!cart.value.length) { notify('error', 'Keranjang masih kosong'); return; }
       const tempId = generateId('TRX'); 
@@ -1018,7 +943,6 @@ createApp({
       
       let updates = {};
       updates['warungkas/transactions/' + tempId] = payload;
-
       cart.value.forEach(item => {
         const productInDB = products.value.find(p => p.id === (item.baseId || item.id));
         if (productInDB) {
@@ -1026,7 +950,6 @@ createApp({
           updates[`warungkas/products/${productInDB.id}/stock`] = newStock;
         }
       });
-
       db.ref().update(updates);
       
       if (type === 'wa') window.open(generateWAURL(), '_blank');
@@ -1036,35 +959,17 @@ createApp({
     const deleteTransaction = async (trx) => { 
       const ok = await confirmAction('Hapus transaksi?', 'Stok barang akan dikembalikan.'); 
       if (!ok) return; 
-      
-      let updates = {};
-      updates['warungkas/transactions/' + trx.id] = null;
-      
+      let updates = {}; updates['warungkas/transactions/' + trx.id] = null;
       const items = parseItems(trx.items);
-      items.forEach(item => {
-        const baseId = item.baseId || item.id;
-        const productInDB = products.value.find(p => p.id === baseId);
-        if (productInDB) {
-          updates[`warungkas/products/${baseId}/stock`] = (productInDB.stock || 0) + item.qty;
-        }
-      });
-
-      db.ref().update(updates);
-      notify('success', 'Transaksi dihapus & Stok dikembalikan'); 
+      items.forEach(item => { const baseId = item.baseId || item.id; const productInDB = products.value.find(p => p.id === baseId); if (productInDB) { updates[`warungkas/products/${baseId}/stock`] = (productInDB.stock || 0) + item.qty; } });
+      db.ref().update(updates); notify('success', 'Transaksi dihapus & Stok dikembalikan'); 
     };
 
     const editTransaction = (trx) => { Swal.fire({ title: 'Edit (Retur) Struk?', text: 'Struk ini akan dibatalkan, dan barang dikembalikan ke Keranjang.', icon: 'question', showCancelButton: true, confirmButtonColor: '#3b82f6', confirmButtonText: 'Ya, Ubah Pesanan' }).then(r => { if(r.isConfirmed) { 
-      
-      let updates = {};
-      updates['warungkas/transactions/' + trx.id] = null;
+      let updates = {}; updates['warungkas/transactions/' + trx.id] = null;
       const items = parseItems(trx.items);
-      items.forEach(item => {
-        const baseId = item.baseId || item.id;
-        const productInDB = products.value.find(p => p.id === baseId);
-        if (productInDB) updates[`warungkas/products/${baseId}/stock`] = (productInDB.stock || 0) + item.qty;
-      });
+      items.forEach(item => { const baseId = item.baseId || item.id; const productInDB = products.value.find(p => p.id === baseId); if (productInDB) updates[`warungkas/products/${baseId}/stock`] = (productInDB.stock || 0) + item.qty; });
       db.ref().update(updates);
-
       cart.value = [...items]; customer.value = { name: trx.customerName || '', phone: trx.customerPhone || '' }; diskon.value = trx.diskon || 0; metodeBayar.value = trx.metodeBayar || 'Cash'; catatanOrder.value = trx.catatan || ''; changeTab('kasir'); notify('info', 'Silakan ubah pesanan di Keranjang'); } }); 
     };
 
@@ -1085,18 +990,10 @@ createApp({
       const validItems = formExpense.value.items.filter(i => i.keterangan && Number(i.nominal) > 0);
       if (validItems.length === 0) return notify('error', 'Masukkan minimal 1 pengeluaran');
       const baseTanggal = new Date();
-      
       let updates = {};
-      validItems.forEach((item, index) => {
-        const d = new Date(baseTanggal.getTime() + index * 1000); 
-        const eid = generateId('EXP');
-        updates[`warungkas/expenses/${eid}`] = { id: eid, tanggal: d.toISOString(), kategori: formExpense.value.kategori, nominal: Number(item.nominal), keterangan: item.keterangan };
-      });
+      validItems.forEach((item, index) => { const d = new Date(baseTanggal.getTime() + index * 1000); const eid = generateId('EXP'); updates[`warungkas/expenses/${eid}`] = { id: eid, tanggal: d.toISOString(), kategori: formExpense.value.kategori, nominal: Number(item.nominal), keterangan: item.keterangan }; });
       db.ref().update(updates);
-      
-      formExpense.value = { kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] };
-      showExpenseModal.value = false;
-      notify('success', `${validItems.length} Pengeluaran dicatat`);
+      formExpense.value = { kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] }; showExpenseModal.value = false; notify('success', `${validItems.length} Pengeluaran dicatat`);
     };
 
     const deleteExpense = async (id) => { const ok = await confirmAction('Hapus pengeluaran?', 'Data pengeluaran akan dihapus permanen.'); if (!ok) return; db.ref('warungkas/expenses/' + id).remove(); notify('success', 'Pengeluaran dihapus'); };
@@ -1106,90 +1003,62 @@ createApp({
       if (String(formSettings.value.pinKasir).length !== 4 || isNaN(Number(formSettings.value.pinKasir))) { notify('error', 'PIN Kasir harus 4 digit angka'); return; } 
       isSavingSettings.value = true; 
       const payload = { ...formSettings.value, pin: String(formSettings.value.pin), pinKasir: String(formSettings.value.pinKasir) }; 
-      try {
-        await db.ref('warungkas/settings').set(payload);
-        notify('success', 'Pengaturan disimpan'); 
-      } finally {
-        isSavingSettings.value = false; 
-      }
+      try { await db.ref('warungkas/settings').set(payload); notify('success', 'Pengaturan disimpan'); } finally { isSavingSettings.value = false; }
     };
 
+    // FITUR ENTERPRISE: REKAP SHIFT UI/UX DINAMIS
     const closeShift = () => {
-      const hariIni = new Date().toLocaleDateString('id-ID');
-      const teks = `REKAP KASIR HARI INI (${hariIni})\n\n` +
-                   `Omzet: Rp ${formatCurrency(dashboardStats.value.omzet)}\n` +
-                   `Pengeluaran: Rp ${formatCurrency(dashboardStats.value.totalPengeluaran)}\n` +
-                   `Laba Kotor: Rp ${formatCurrency(dashboardStats.value.labaKotor)}\n` +
-                   `Total Struk: ${dashboardStats.value.totalTrx}\n\n` +
-                   `Uang fisik di laci harus sesuai dengan data di atas.`;
+      const hariIni = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      
+      const htmlContent = `
+        <div class="text-left space-y-3 mt-4 text-sm">
+          <div class="flex justify-between border-b border-gray-100 pb-2">
+            <span class="text-gray-500 font-medium">Omzet Kotor</span> 
+            <span class="font-bold text-secondary">Rp ${formatCurrency(dashboardStats.value.omzet)}</span>
+          </div>
+          <div class="flex justify-between border-b border-gray-100 pb-2">
+            <span class="text-gray-500 font-medium">Pengeluaran Laci</span> 
+            <span class="font-bold text-red-500">- Rp ${formatCurrency(dashboardStats.value.totalPengeluaran)}</span>
+          </div>
+          <div class="flex justify-between border-b border-gray-100 pb-2">
+            <span class="text-gray-500 font-medium">Total Struk</span> 
+            <span class="font-bold text-secondary">${dashboardStats.value.totalTrx} Trx</span>
+          </div>
+          <div class="flex justify-between bg-blue-50 p-3 rounded-xl mt-2">
+            <span class="text-blue-600 font-bold">Laba Bersih</span> 
+            <span class="font-black text-blue-700 text-lg">Rp ${formatCurrency(filteredReport.value.labaBersih)}</span>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-4 text-center">Pastikan uang fisik di laci sesuai dengan perhitungan sistem sebelum menutup shift.</p>
+        </div>
+      `;
       
       Swal.fire({
-        title: 'Rekap Kasir Selesai',
-        text: teks,
+        title: 'Rekap Shift Kasir',
+        html: htmlContent,
         icon: 'info',
-        confirmButtonText: 'Tutup & Lock Layar'
-      }).then(() => {
-        logout();
+        showCancelButton: true,
+        confirmButtonText: 'Tutup Shift & Lock Layar',
+        cancelButtonText: 'Kembali',
+        confirmButtonColor: '#FF6B35',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          logout();
+        }
       });
     };
     
-    const exportDataExcel = () => { 
-      const wb = XLSX.utils.book_new(); 
-      const wsProducts = XLSX.utils.json_to_sheet(products.value); 
-      const wsTransactions = XLSX.utils.json_to_sheet(transactions.value.map(t => ({ ...t, items: JSON.stringify(t.items || []) }))); 
-      const wsExpenses = XLSX.utils.json_to_sheet(expenses.value); 
-      XLSX.utils.book_append_sheet(wb, wsProducts, 'Products'); 
-      XLSX.utils.book_append_sheet(wb, wsTransactions, 'Transactions'); 
-      XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses'); 
-      const fileName = 'WarungKas_Backup_' + Date.now() + '.xlsx'; 
-      XLSX.writeFile(wb, fileName); 
-      notify('success', 'Export Excel berhasil'); 
-    };
-    
-    const importDataExcel = async (e) => { 
-      const file = e.target.files[0]; if (!file) return; 
-      try { 
-        const data = await file.arrayBuffer(); const wb = XLSX.read(data, { type: 'array' }); 
-        
-        let updates = {};
-        if (wb.SheetNames.includes('Products')) { 
-          const prods = XLSX.utils.sheet_to_json(wb.Sheets['Products']);
-          updates['warungkas/products'] = prods.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
-        } 
-        if (wb.SheetNames.includes('Transactions')) { 
-          const trxs = XLSX.utils.sheet_to_json(wb.Sheets['Transactions']).map(t => ({ ...t, items: parseItems(t.items) }));
-          updates['warungkas/transactions'] = trxs.reduce((acc, t) => ({ ...acc, [t.id]: t }), {});
-        } 
-        if (wb.SheetNames.includes('Expenses')) { 
-          const exps = XLSX.utils.sheet_to_json(wb.Sheets['Expenses']);
-          updates['warungkas/expenses'] = exps.reduce((acc, e) => ({ ...acc, [e.id]: e }), {});
-        } 
-        
-        await db.ref().update(updates);
-        notify('success', 'Data Cloud berhasil di-overwrite dari Excel'); 
-      } catch (err) { 
-        notify('error', 'File Excel tidak valid'); 
-      } finally { 
-        e.target.value = ''; 
-      } 
-    };
-
+    const exportDataExcel = () => { const wb = XLSX.utils.book_new(); const wsProducts = XLSX.utils.json_to_sheet(products.value); const wsTransactions = XLSX.utils.json_to_sheet(transactions.value.map(t => ({ ...t, items: JSON.stringify(t.items || []) }))); const wsExpenses = XLSX.utils.json_to_sheet(expenses.value); XLSX.utils.book_append_sheet(wb, wsProducts, 'Products'); XLSX.utils.book_append_sheet(wb, wsTransactions, 'Transactions'); XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses'); const fileName = 'WarungKas_Backup_' + Date.now() + '.xlsx'; XLSX.writeFile(wb, fileName); notify('success', 'Export Excel berhasil'); };
+    const importDataExcel = async (e) => { const file = e.target.files[0]; if (!file) return; try { const data = await file.arrayBuffer(); const wb = XLSX.read(data, { type: 'array' }); let updates = {}; if (wb.SheetNames.includes('Products')) { const prods = XLSX.utils.sheet_to_json(wb.Sheets['Products']); updates['warungkas/products'] = prods.reduce((acc, p) => ({ ...acc, [p.id]: p }), {}); } if (wb.SheetNames.includes('Transactions')) { const trxs = XLSX.utils.sheet_to_json(wb.Sheets['Transactions']).map(t => ({ ...t, items: parseItems(t.items) })); updates['warungkas/transactions'] = trxs.reduce((acc, t) => ({ ...acc, [t.id]: t }), {}); } if (wb.SheetNames.includes('Expenses')) { const exps = XLSX.utils.sheet_to_json(wb.Sheets['Expenses']); updates['warungkas/expenses'] = exps.reduce((acc, e) => ({ ...acc, [e.id]: e }), {}); } await db.ref().update(updates); notify('success', 'Data Cloud berhasil di-overwrite dari Excel'); } catch (err) { notify('error', 'File Excel tidak valid'); } finally { e.target.value = ''; } };
     const handleLogoUpload = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const MAX_WIDTH = 250; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); formSettings.value.logo = canvas.toDataURL('image/jpeg', 0.8); notify('success', 'Foto berhasil dipilih'); }; img.src = event.target.result; }; reader.readAsDataURL(file); };
 
     onMounted(() => { 
       updateClock(); setInterval(updateClock, 1000); 
       loadData(); 
-
-      window.addEventListener('mousemove', resetIdleTimer);
-      window.addEventListener('keydown', resetIdleTimer);
-      window.addEventListener('touchstart', resetIdleTimer);
+      window.addEventListener('mousemove', resetIdleTimer); window.addEventListener('keydown', resetIdleTimer); window.addEventListener('touchstart', resetIdleTimer);
     });
 
     onUnmounted(() => {
-      window.removeEventListener('mousemove', resetIdleTimer);
-      window.removeEventListener('keydown', resetIdleTimer);
-      window.removeEventListener('touchstart', resetIdleTimer);
-      clearTimeout(idleTimer);
+      window.removeEventListener('mousemove', resetIdleTimer); window.removeEventListener('keydown', resetIdleTimer); window.removeEventListener('touchstart', resetIdleTimer); clearTimeout(idleTimer);
     });
 
     return {
