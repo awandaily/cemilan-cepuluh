@@ -58,7 +58,7 @@
   <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center animate-fade-in">
     <div class="loader mb-4"></div>
     <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan ke Cloud...</p>
-    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.3 Enterprise</span>
+    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.4 Enterprise</span>
   </div>
 
   <div v-else-if="systemError" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -174,7 +174,7 @@
             <button @click="changeTab('kasir')" class="w-full bg-secondary text-white py-4 rounded-2xl font-semibold shadow-glass flex flex-col items-center justify-center gap-1 active:scale-95 transition-all">
               <i class="ph-bold ph-calculator text-2xl"></i> <span class="text-sm">Buka Kasir</span>
             </button>
-            <button @click="showExpenseModal = true" class="w-full bg-red-50 text-red-600 border border-red-100 py-4 rounded-2xl font-semibold shadow-sm flex flex-col items-center justify-center gap-1 active:scale-95 transition-all">
+            <button @click="openExpenseModal()" class="w-full bg-red-50 text-red-600 border border-red-100 py-4 rounded-2xl font-semibold shadow-sm flex flex-col items-center justify-center gap-1 active:scale-95 transition-all">
               <i class="ph-bold ph-hand-coins text-2xl"></i> <span class="text-sm">Pengeluaran</span>
             </button>
           </div>
@@ -233,7 +233,6 @@
               </div>
               
               <div v-if="getCartQtyByBaseId(item.id) > 0 && item.variants && item.variants.trim() !== ''" class="absolute -top-2 -right-2 bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm z-30 pointer-events-none">{{ getCartQtyByBaseId(item.id) }}</div>
-
             </div>
             
             <div v-if="!filteredProducts.length" class="col-span-2 text-center py-10 text-gray-400 text-sm">Produk belum tersedia.</div>
@@ -338,7 +337,7 @@
                     
                     <div class="text-[10px] text-gray-500 mt-2 line-clamp-2 leading-tight w-full max-w-[200px]">
                       <span v-for="(it, i) in (trx.items ? parseItems(trx.items) : [])" :key="i">
-                        {{ it.name }} ({{ it.qty }})<template v-if="i < parseItems(trx.items).length - 1">, </template>
+                        {{ it.name }} ({{ it.qty }}x)<template v-if="i < parseItems(trx.items).length - 1">, </template>
                       </span>
                     </div>
 
@@ -349,6 +348,7 @@
                 </div>
                 <div class="flex justify-end gap-2 border-t border-gray-50 pt-3 mt-1">
                   <button @click="editTransaction(trx)" class="text-[11px] font-semibold text-blue-500 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-pencil-simple"></i> Edit (Retur)</button>
+                  <button @click="deleteTransaction(trx)" class="text-[11px] font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-trash"></i> Hapus</button>
                 </div>
               </div>
               <div v-if="!filteredTransactions.length" class="text-center text-xs text-gray-400 py-6 bg-white rounded-2xl border border-dashed border-gray-200">Belum ada transaksi.</div>
@@ -365,6 +365,7 @@
                   <div class="text-right"><p class="font-bold text-red-500 text-sm">- Rp {{ formatCurrency(exp.nominal) }}</p></div>
                 </div>
                 <div class="flex justify-end gap-2 border-t border-gray-50 pt-3 mt-1">
+                  <button @click="editExpense(exp)" class="text-[11px] font-semibold text-blue-500 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-pencil-simple"></i> Edit</button>
                   <button @click="deleteExpense(exp.id)" class="text-[11px] font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg flex items-center gap-1 active:scale-95"><i class="ph-bold ph-trash"></i> Hapus</button>
                 </div>
               </div>
@@ -393,15 +394,16 @@
                 </div>
               </div>
               <div><label class="text-xs text-gray-400 font-medium">Nama Warung</label><input v-model="formSettings.namawarung" type="text" class="w-full border-b border-gray-200 py-2 outline-none focus:border-primary font-medium"></div>
+              <div><label class="text-xs text-gray-400 font-medium">No. WA Admin</label><input v-model="formSettings.nowawarung" type="tel" class="w-full border-b border-gray-200 py-2 outline-none focus:border-primary font-medium"></div>
               
               <div class="bg-green-50 p-4 rounded-2xl border border-green-100 mt-2 space-y-3">
-                <p class="text-[10px] font-bold text-green-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-whatsapp-logo"></i> Setting Struk WhatsApp</p>
+                <p class="text-[10px] font-bold text-green-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-whatsapp-logo"></i> Template Teks Struk WA</p>
                 <div>
-                  <label class="text-[10px] text-gray-500 font-medium">Teks Pembuka (Header)</label>
+                  <label class="text-[10px] text-gray-500 font-medium">Header / Pembuka</label>
                   <textarea v-model="formSettings.waHeader" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-xs bg-white resize-none" placeholder="Halo! Berikut pesanan Anda:"></textarea>
                 </div>
                 <div>
-                  <label class="text-[10px] text-gray-500 font-medium">Teks Penutup (Footer)</label>
+                  <label class="text-[10px] text-gray-500 font-medium">Footer / Penutup</label>
                   <textarea v-model="formSettings.waFooter" rows="2" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-xs bg-white resize-none" placeholder="Terima kasih sudah jajan!"></textarea>
                 </div>
               </div>
@@ -499,8 +501,8 @@
         </div>
 
         <div class="space-y-2 mb-4 shrink-0">
-          <input v-model="customer.name" type="text" placeholder="Nama Pelanggan Opsional" class="w-full bg-white px-4 py-3 rounded-xl border border-gray-100 focus:border-primary outline-none text-sm">
-          <input v-model="customer.phone" type="tel" placeholder="No. WA Opsional" class="w-full bg-white px-4 py-3 rounded-xl border border-gray-100 outline-none text-sm">
+          <input v-model="customer.name" type="text" placeholder="Nama Pelanggan (Opsional)" class="w-full bg-white px-4 py-3 rounded-xl border border-gray-100 focus:border-primary outline-none text-sm">
+          <input v-model="customer.phone" type="tel" placeholder="No. WA (Opsional)" class="w-full bg-white px-4 py-3 rounded-xl border border-gray-100 outline-none text-sm">
         </div>
 
         <div class="flex-1 overflow-y-auto space-y-3 mb-4 rounded-xl hide-scrollbar">
@@ -575,7 +577,7 @@
     <div v-if="showExpenseModal" class="fixed inset-0 bg-secondary/80 z-50 flex items-end justify-center backdrop-blur-sm" @click.self="showExpenseModal=false">
       <div class="bg-white w-full max-w-md rounded-t-[2rem] p-5 animate-slide-up shadow-2xl flex flex-col max-h-[90vh]">
         <div class="flex justify-between items-center mb-5 shrink-0">
-          <h2 class="font-extrabold text-xl text-red-600">Catat Pengeluaran</h2>
+          <h2 class="font-extrabold text-xl text-red-600">{{ formExpense.id ? 'Edit Pengeluaran' : 'Catat Pengeluaran' }}</h2>
           <button @click="showExpenseModal=false" class="bg-gray-100 p-2 rounded-full active:scale-90"><i class="ph-bold ph-x"></i></button>
         </div>
 
@@ -598,9 +600,9 @@
                 <input v-model.number="item.nominal" type="number" placeholder="0" class="w-full border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-red-500 text-sm bg-white font-bold text-red-600">
               </div>
             </div>
-            <button v-if="formExpense.items.length > 1" @click="removeExpenseItem(idx)" class="bg-white border border-gray-200 text-red-400 hover:text-red-600 w-8 h-8 rounded-full flex items-center justify-center absolute -top-2 -right-2 shadow-sm active:scale-90"><i class="ph-bold ph-trash"></i></button>
+            <button v-if="formExpense.items.length > 1 && !formExpense.id" @click="removeExpenseItem(idx)" class="bg-white border border-gray-200 text-red-400 hover:text-red-600 w-8 h-8 rounded-full flex items-center justify-center absolute -top-2 -right-2 shadow-sm active:scale-90"><i class="ph-bold ph-trash"></i></button>
           </div>
-          <button @click="addExpenseItem" class="text-red-500 bg-red-50 px-4 py-2 rounded-xl text-xs font-bold w-full active:scale-95 transition-all"><i class="ph-bold ph-plus"></i> Tambah Item Lain</button>
+          <button v-if="!formExpense.id" @click="addExpenseItem" class="text-red-500 bg-red-50 px-4 py-2 rounded-xl text-xs font-bold w-full active:scale-95 transition-all"><i class="ph-bold ph-plus"></i> Tambah Item Lain</button>
         </div>
 
         <div class="shrink-0 space-y-4">
@@ -633,7 +635,7 @@
 
 <script>
 // =========================================================
-// SCRIPT FIREBASE INITIALIZATION 
+// SCRIPT FIREBASE INITIALIZATION & CONFIG (TERINJEKSI)
 // =========================================================
 
 const firebaseConfig = {
@@ -661,6 +663,7 @@ createApp({
   setup() {
     const isLoadingSystem = ref(true);
     const systemError = ref('');
+    
     const isLoggedIn = ref(false);
     const userRole = ref(''); 
     const pin = ref('');
@@ -693,13 +696,13 @@ createApp({
     const selectedProductForVariant = ref(null);
     const selectedVariants = ref([]);
 
-    const storeProfile = ref({ name: 'WarungKas', phone: '', logo: '' });
-    const formSettings = ref({ namawarung: 'WarungKas', nowawarung: '', alamat: '', waHeader: 'Halo! Berikut detail pesanan Anda:', waFooter: 'Terima kasih sudah jajan!', pin: '1234', pinKasir: '0000', logo: '' });
+    const storeProfile = ref({ name: 'Cemilan Cepuluh', phone: '', logo: '' });
+    const formSettings = ref({ namawarung: 'Cemilan Cepuluh', nowawarung: '', alamat: '', waHeader: 'Halo! Berikut detail pesanan Anda:', waFooter: 'Terima kasih sudah jajan!', pin: '1234', pinKasir: '0000', logo: '' });
     const activePin = ref('1234');
     const activePinKasir = ref('0000');
     
     const formProduct = ref({ id: null, name: '', category: 'Makanan', price: 0, hpp: 0, stock: 100, icon: '📦', status: 'aktif', variants: '' });
-    const formExpense = ref({ kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] });
+    const formExpense = ref({ id: null, kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] });
 
     const liveClock = ref('');
     const currentDateTime = ref('');
@@ -736,6 +739,8 @@ createApp({
     const formatCurrency = (val) => new Intl.NumberFormat('id-ID').format(Number(val || 0));
     const formatDateTime = (val) => { if (!val) return '-'; return new Date(val).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }); };
     const getTabIcon = (tab) => { const map = { dashboard: 'ph-house', kasir: 'ph-calculator', produk: 'ph-package', laporan: 'ph-chart-pie-slice', pengaturan: 'ph-gear' }; return map[tab] || 'ph-circle'; };
+    
+    // SMART SEARCH & FILTER
     const changeTab = (tab) => { currentTab.value = tab; searchQuery.value = ''; activeCategory.value = 'Semua'; };
 
     const isAdmin = computed(() => userRole.value === 'admin');
@@ -745,6 +750,9 @@ createApp({
       try { return typeof items === 'string' ? JSON.parse(items || '[]') : []; } catch(e) { return []; }
     };
 
+    // =========================================================
+    // LISTENER FIREBASE REALTIME
+    // =========================================================
     const loadData = () => {
       if (!db) { systemError.value = "Firebase Error: Gagal menghubungkan ke server."; isLoadingSystem.value = false; return; }
       isLoadingSystem.value = true; systemError.value = '';
@@ -758,7 +766,7 @@ createApp({
         
         if (data.settings) {
           formSettings.value = { ...formSettings.value, ...data.settings };
-          storeProfile.value.name = data.settings.namawarung || 'WarungKas';
+          storeProfile.value.name = data.settings.namawarung || 'Cemilan Cepuluh';
           storeProfile.value.phone = data.settings.nowawarung || '';
           storeProfile.value.logo = data.settings.logo || '';
           activePin.value = String(data.settings.pin || '1234');
@@ -780,11 +788,13 @@ createApp({
       }
     };
     const removePin = () => { pin.value = pin.value.slice(0, -1); }; const clearPin = () => { pin.value = ''; };
-    const logout = async () => { const ok = await confirmAction('Keluar aplikasi?', 'Layar akan dikunci otomatis.'); if (!ok) return; isLoggedIn.value = false; userRole.value = ''; pin.value = ''; currentTab.value = 'dashboard'; clearTimeout(idleTimer); };
+    const logout = async () => { const ok = await confirmAction('Kunci Layar?', 'Anda akan kembali ke layar login.'); if (!ok) return; isLoggedIn.value = false; userRole.value = ''; pin.value = ''; currentTab.value = 'dashboard'; clearTimeout(idleTimer); };
 
     const availableCategories = computed(() => { const base = ['Makanan', 'Minuman', 'Cemilan', 'Paket', 'Lainnya']; const fromProducts = products.value.map(p => p.category).filter(Boolean); return [...new Set([...base, ...fromProducts])]; });
-    const filteredProducts = computed(() => { return products.value.filter(p => { const catOk = activeCategory.value === 'Semua' || p.category === activeCategory.value; const searchOk = p.name.toLowerCase().includes(searchQuery.value.toLowerCase()); const statusOk = p.status !== 'nonaktif'; return catOk && searchOk && statusOk; }); });
-    const filteredCatalog = computed(() => { return products.value.filter(p => p.name.toLowerCase().includes(searchQuery.value.toLowerCase())); });
+    
+    // SMART SEARCH: trim() dan toLowerCase() agar pencarian kuat terhadap spasi tidak sengaja
+    const filteredProducts = computed(() => { return products.value.filter(p => { const catOk = activeCategory.value === 'Semua' || p.category === activeCategory.value; const searchOk = p.name.toLowerCase().includes(searchQuery.value.trim().toLowerCase()); const statusOk = p.status !== 'nonaktif'; return catOk && searchOk && statusOk; }); });
+    const filteredCatalog = computed(() => { return products.value.filter(p => p.name.toLowerCase().includes(searchQuery.value.trim().toLowerCase())); });
 
     const parsedVariantsList = computed(() => {
       if (!selectedProductForVariant.value || !selectedProductForVariant.value.variants) return [];
@@ -857,8 +867,10 @@ createApp({
     const cartHppTotal = computed(() => cart.value.reduce((s, i) => s + Number(i.hpp || 0) * Number(i.qty || 0), 0));
     const cartTotal = computed(() => Math.max(0, cartSubtotal.value - Number(diskon.value || 0)));
     const cartTotalItems = computed(() => cart.value.reduce((s, i) => s + Number(i.qty || 0), 0));
+
     const lowStockProducts = computed(() => products.value.filter(p => p.stock <= 5 && p.status !== 'nonaktif'));
 
+    // SMART FILTER DATE
     const isWithinFilter = (dateStr) => {
       const d = new Date(dateStr); if (reportFilter.value.mode === 'today') { return d.toDateString() === new Date().toDateString(); }
       if (reportFilter.value.mode === 'range' && reportFilter.value.start) { const start = new Date(reportFilter.value.start); const end = new Date(reportFilter.value.end || reportFilter.value.start); end.setHours(23, 59, 59, 999); return d >= start && d <= end; } return true;
@@ -902,18 +914,20 @@ createApp({
     const resetDateFilter = () => { reportFilter.value = { mode: 'all', start: '', end: '' }; showDateFilterModal.value = false; notify('success', 'Filter direset'); };
 
     // =========================================================
-    // BUG FIX WA FORWARD
+    // SMART WA TEMPLATE BUG FIX (NO NUMBER & TEXT FORMAT)
     // =========================================================
     const generateWAURL = () => { 
-      let text = (formSettings.value.waHeader || 'Halo! Berikut detail pesanan Anda:') + '\n'; 
+      let text = `*${formSettings.value.waHeader || 'Halo! Berikut detail pesanan Anda:'}*\n`; 
       text += new Date().toLocaleString('id-ID') + '\n'; 
-      text += '-----------------------------\n'; 
-      cart.value.forEach(item => { text += '- ' + item.name + ' ' + item.qty + ' x Rp ' + formatCurrency(item.price * item.qty) + '\n'; }); 
-      text += '-----------------------------\n'; 
-      if (diskon.value > 0) text += 'Diskon: -Rp ' + formatCurrency(diskon.value) + '\n'; 
-      text += 'TOTAL: Rp ' + formatCurrency(cartTotal.value) + '\n'; 
-      text += '-----------------------------\n'; 
-      text += (formSettings.value.waFooter || 'Terima kasih sudah jajan!'); 
+      text += '---------------------------------------------\n'; 
+      cart.value.forEach(item => { 
+        text += `*${item.name} (${item.qty}x)*\nRp ${formatCurrency(item.price * item.qty)}\n`; 
+      }); 
+      text += '---------------------------------------------\n'; 
+      if (diskon.value > 0) text += `Diskon: -Rp ${formatCurrency(diskon.value)}\n`; 
+      text += `*TOTAL: Rp ${formatCurrency(cartTotal.value)}*\n`; 
+      text += '---------------------------------------------\n'; 
+      text += `_${formSettings.value.pesanfooter || 'Terima kasih sudah jajan!'}_`; 
 
       const encodedText = encodeURIComponent(text);
       let targetNum = customer.value.phone || ''; 
@@ -922,13 +936,16 @@ createApp({
         if (targetNum.startsWith('0')) targetNum = '62' + targetNum.substring(1);
         else if (!targetNum.startsWith('62') && !targetNum.startsWith('+62')) targetNum = '62' + targetNum;
         targetNum = targetNum.replace('+', '');
-        return `https://wa.me/${targetNum}?text=${encodedText}`;
+        return `https://api.whatsapp.com/send?phone=${targetNum}&text=${encodedText}`;
       } else {
-        // Jika tidak ada nomor telepon, gunakan format API agar HP memunculkan halaman "Kirim ke Kontak"
+        // Mode Forward: Akan membuka kontak list di WA HP untuk diteruskan
         return `https://api.whatsapp.com/send?text=${encodedText}`;
       }
     };
     
+    // =========================================================
+    // CRUD FIREBASE 
+    // =========================================================
     const processPayment = async (type) => {
       if (!cart.value.length) { notify('error', 'Keranjang masih kosong'); return; }
       const tempId = generateId('TRX'); 
@@ -982,18 +999,43 @@ createApp({
     };
     const deleteProduct = async (id) => { const ok = await confirmAction('Hapus produk?', 'Produk akan dihapus dari daftar.'); if (!ok) return; db.ref('warungkas/products/' + id).remove(); showProductModal.value = false; notify('success', 'Produk dihapus'); };
 
+    // SMART CRUD PENGELUARAN (Bisa Mode Tambah/Edit)
+    const openExpenseModal = (exp = null) => {
+      if (exp) {
+        formExpense.value = { id: exp.id, kategori: exp.kategori, items: [{ keterangan: exp.keterangan, nominal: exp.nominal }] };
+      } else {
+        formExpense.value = { id: null, kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] };
+      }
+      showExpenseModal.value = true;
+    };
+
     const addExpenseItem = () => formExpense.value.items.push({ keterangan: '', nominal: null });
     const removeExpenseItem = (idx) => formExpense.value.items.splice(idx, 1);
     const expenseTotal = computed(() => formExpense.value.items.reduce((s, i) => s + Number(i.nominal || 0), 0));
 
     const saveExpense = () => {
-      const validItems = formExpense.value.items.filter(i => i.keterangan && Number(i.nominal) > 0);
-      if (validItems.length === 0) return notify('error', 'Masukkan minimal 1 pengeluaran');
-      const baseTanggal = new Date();
-      let updates = {};
-      validItems.forEach((item, index) => { const d = new Date(baseTanggal.getTime() + index * 1000); const eid = generateId('EXP'); updates[`warungkas/expenses/${eid}`] = { id: eid, tanggal: d.toISOString(), kategori: formExpense.value.kategori, nominal: Number(item.nominal), keterangan: item.keterangan }; });
-      db.ref().update(updates);
-      formExpense.value = { kategori: 'Bahan Baku', items: [{ keterangan: '', nominal: null }] }; showExpenseModal.value = false; notify('success', `${validItems.length} Pengeluaran dicatat`);
+      // Jika mode Edit (hanya 1 item)
+      if (formExpense.value.id) {
+        const item = formExpense.value.items[0];
+        if (!item.keterangan || Number(item.nominal) <= 0) return notify('error', 'Data tidak valid');
+        
+        const existingExp = expenses.value.find(e => e.id === formExpense.value.id);
+        const payload = { id: formExpense.value.id, tanggal: existingExp.tanggal, kategori: formExpense.value.kategori, nominal: Number(item.nominal), keterangan: item.keterangan };
+        db.ref('warungkas/expenses/' + payload.id).set(payload);
+        showExpenseModal.value = false;
+        notify('success', 'Pengeluaran diperbarui');
+      } 
+      // Jika mode Tambah Baru (bisa multi-item)
+      else {
+        const validItems = formExpense.value.items.filter(i => i.keterangan && Number(i.nominal) > 0);
+        if (validItems.length === 0) return notify('error', 'Masukkan minimal 1 pengeluaran');
+        const baseTanggal = new Date();
+        let updates = {};
+        validItems.forEach((item, index) => { const d = new Date(baseTanggal.getTime() + index * 1000); const eid = generateId('EXP'); updates[`warungkas/expenses/${eid}`] = { id: eid, tanggal: d.toISOString(), kategori: formExpense.value.kategori, nominal: Number(item.nominal), keterangan: item.keterangan }; });
+        db.ref().update(updates);
+        showExpenseModal.value = false;
+        notify('success', `${validItems.length} Pengeluaran dicatat`);
+      }
     };
 
     const deleteExpense = async (id) => { const ok = await confirmAction('Hapus pengeluaran?', 'Data pengeluaran akan dihapus permanen.'); if (!ok) return; db.ref('warungkas/expenses/' + id).remove(); notify('success', 'Pengeluaran dihapus'); };
@@ -1006,44 +1048,43 @@ createApp({
       try { await db.ref('warungkas/settings').set(payload); notify('success', 'Pengaturan disimpan'); } finally { isSavingSettings.value = false; }
     };
 
-    // FITUR ENTERPRISE: REKAP SHIFT UI/UX DINAMIS
+    // DYNAMIC REKAP SHIFT UI
     const closeShift = () => {
       const hariIni = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       
       const htmlContent = `
-        <div class="text-left space-y-3 mt-4 text-sm">
-          <div class="flex justify-between border-b border-gray-100 pb-2">
-            <span class="text-gray-500 font-medium">Omzet Kotor</span> 
-            <span class="font-bold text-secondary">Rp ${formatCurrency(dashboardStats.value.omzet)}</span>
+        <div class="text-left space-y-3 mt-4 text-sm bg-gray-50 p-5 rounded-2xl border border-gray-200">
+          <div class="flex justify-between border-b border-gray-200 pb-3">
+            <span class="text-gray-600 font-bold">Omzet Penjualan</span> 
+            <span class="font-black text-secondary">Rp ${formatCurrency(dashboardStats.value.omzet)}</span>
           </div>
-          <div class="flex justify-between border-b border-gray-100 pb-2">
-            <span class="text-gray-500 font-medium">Pengeluaran Laci</span> 
-            <span class="font-bold text-red-500">- Rp ${formatCurrency(dashboardStats.value.totalPengeluaran)}</span>
+          <div class="flex justify-between border-b border-gray-200 pb-3">
+            <span class="text-gray-600 font-bold">Pengeluaran Laci</span> 
+            <span class="font-black text-red-500">- Rp ${formatCurrency(dashboardStats.value.totalPengeluaran)}</span>
           </div>
-          <div class="flex justify-between border-b border-gray-100 pb-2">
-            <span class="text-gray-500 font-medium">Total Struk</span> 
-            <span class="font-bold text-secondary">${dashboardStats.value.totalTrx} Trx</span>
+          <div class="flex justify-between border-b border-gray-200 pb-3">
+            <span class="text-gray-600 font-bold">Total Struk</span> 
+            <span class="font-black text-secondary">${dashboardStats.value.totalTrx} Transaksi</span>
           </div>
-          <div class="flex justify-between bg-blue-50 p-3 rounded-xl mt-2">
-            <span class="text-blue-600 font-bold">Laba Bersih</span> 
-            <span class="font-black text-blue-700 text-lg">Rp ${formatCurrency(filteredReport.value.labaBersih)}</span>
+          <div class="flex justify-between items-center bg-blue-100 p-4 rounded-xl mt-4 border border-blue-200">
+            <span class="text-blue-800 font-black uppercase tracking-wider text-xs">Sisa Uang Di Laci</span> 
+            <span class="font-black text-blue-700 text-xl">Rp ${formatCurrency(dashboardStats.value.omzet - dashboardStats.value.totalPengeluaran)}</span>
           </div>
-          <p class="text-[10px] text-gray-400 mt-4 text-center">Pastikan uang fisik di laci sesuai dengan perhitungan sistem sebelum menutup shift.</p>
         </div>
+        <p class="text-xs text-gray-500 mt-4 text-center">Pastikan uang fisik sesuai dengan perhitungan sistem sebelum menutup shift.</p>
       `;
       
       Swal.fire({
-        title: 'Rekap Shift Kasir',
+        title: `Rekap Kasir<br><span class="text-sm font-medium text-gray-400">${hariIni}</span>`,
         html: htmlContent,
-        icon: 'info',
         showCancelButton: true,
-        confirmButtonText: 'Tutup Shift & Lock Layar',
+        confirmButtonText: '<i class="ph-bold ph-lock-key"></i> Tutup & Lock Layar',
         cancelButtonText: 'Kembali',
-        confirmButtonColor: '#FF6B35',
+        confirmButtonColor: '#1E293B',
+        cancelButtonColor: '#f3f4f6',
+        customClass: { cancelButton: 'text-gray-800 font-bold' }
       }).then((result) => {
-        if (result.isConfirmed) {
-          logout();
-        }
+        if (result.isConfirmed) { logout(); }
       });
     };
     
@@ -1067,7 +1108,7 @@ createApp({
       cartTotalItems, cartSubtotal, cartTotal, diskon, metodeBayar, catatanOrder, processPayment, customer, parseItems,
       showCartModal, products, filteredProducts, filteredCatalog, searchQuery, activeCategory, categories, availableCategories, showProductModal, openProductModal, saveProduct, deleteProduct, formProduct,
       showVariantModal, selectedProductForVariant, selectedVariants, parsedVariantsList, variantTotalPrice, addVariantToCart,
-      showExpenseModal, formExpense, saveExpense, deleteExpense, addExpenseItem, removeExpenseItem, expenseTotal, dashboardInsight, lowStockProducts, closeShift,
+      showExpenseModal, formExpense, saveExpense, deleteExpense, openExpenseModal, addExpenseItem, removeExpenseItem, expenseTotal, dashboardInsight, lowStockProducts, closeShift,
       reportFilter, filteredReport, filteredTransactions, filteredExpenses, dashboardStats, topSoldToday,
       storeProfile, formSettings, saveSettings, isSavingSettings, exportDataExcel, importDataExcel, handleLogoUpload,
       setReportFilter, openDateFilter, showDateFilterModal, dateFilter, applyDateFilter, resetDateFilter, tabs, deleteTransaction, editTransaction,
