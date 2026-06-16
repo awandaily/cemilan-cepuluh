@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Cemilan Cepuluh POS</title>
+  <title>Cemilan Cepuluh POS Enterprise</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,8 +57,8 @@
 
   <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center animate-fade-in">
     <div class="loader mb-4"></div>
-    <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan Database Cloud...</p>
-    <span class="mt-8 text-[10px] text-gray-400">WarungKas Firebase Edition</span>
+    <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan ke Cloud...</p>
+    <span class="mt-8 text-[10px] text-gray-400">WarungKas Enterprise Edition</span>
   </div>
 
   <div v-else-if="systemError" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -75,7 +75,7 @@
     <div v-else class="w-20 h-20 bg-white text-primary rounded-3xl flex items-center justify-center text-4xl mb-6 shadow-glass animate-pop"><i class="ph-fill ph-storefront"></i></div>
     
     <h1 class="text-3xl font-extrabold tracking-tight mb-2">{{ storeProfile.name || 'WarungKas' }}</h1>
-    <p class="text-white/80 mb-8 text-center text-sm">Masukan PIN untuk mengakses sistem.</p>
+    <p class="text-white/80 mb-8 text-center text-sm">Masukan PIN Kasir.</p>
 
     <div class="flex gap-4 mb-8"><div v-for="i in 4" :key="i" class="w-4 h-4 rounded-full transition-all duration-300" :class="pin.length >= i ? 'bg-white scale-110 shadow-lg' : 'bg-white/30'"></div></div>
 
@@ -87,7 +87,7 @@
     </div>
 
     <p v-if="loginError" class="mt-6 text-red-200 bg-red-900/30 px-4 py-2 rounded-xl text-sm animate-fade-in">{{ loginError }}</p>
-    <p v-else class="mt-6 text-white/50 text-xs">PIN default: 1234</p>
+    <p v-else class="mt-6 text-white/50 text-xs">Aplikasi akan Auto-Lock jika tidak aktif</p>
   </div>
 
   <template v-else>
@@ -99,8 +99,11 @@
           {{ storeProfile.name }}
         </h1>
         <div class="mt-1.5 flex items-center gap-2">
-          <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-[9px] px-2 py-0.5 rounded-full font-bold">
+          <span v-if="isOnline" class="inline-flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-[9px] px-2 py-0.5 rounded-full font-bold">
             <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Cloud Active
+          </span>
+          <span v-else class="inline-flex items-center gap-1 bg-red-100 text-red-700 border border-red-200 text-[9px] px-2 py-0.5 rounded-full font-bold">
+            <i class="ph-bold ph-wifi-slash"></i> Offline Mode
           </span>
           <span class="text-[10px] font-medium text-gray-500">{{ currentDateTime }}</span>
         </div>
@@ -189,12 +192,24 @@
           </div>
 
           <div class="grid grid-cols-2 gap-4 pb-32">
-            <div v-for="item in filteredProducts" :key="item.id" @click="addToCart(item)" class="bg-white p-4 rounded-3xl shadow-soft border border-gray-50 active:bg-gray-50 cursor-pointer flex flex-col items-center text-center relative animate-pop">
-              <div v-if="getCartQty(item.id)" class="absolute -top-2 -right-2 bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">{{ getCartQty(item.id) }}</div>
-              <div class="text-5xl mb-3 mt-2">{{ item.icon }}</div>
-              <h3 class="text-sm font-bold text-secondary leading-tight">{{ item.name }}</h3>
-              <p class="text-primary font-extrabold text-sm mt-1">Rp {{ formatCurrency(item.price) }}</p>
+            <div v-for="item in filteredProducts" :key="item.id" class="bg-white rounded-3xl shadow-soft border border-gray-50 active:bg-gray-50 cursor-pointer flex flex-col items-center text-center relative animate-pop overflow-hidden min-h-[140px]">
+              
+              <div @click="addToCart(item)" class="w-full h-full flex flex-col items-center justify-center p-4">
+                <div class="text-5xl mb-3 mt-2">{{ item.icon }}</div>
+                <h3 class="text-sm font-bold text-secondary leading-tight">{{ item.name }}</h3>
+                <p class="text-primary font-extrabold text-sm mt-1">Rp {{ formatCurrency(item.price) }}</p>
+              </div>
+
+              <div v-if="getCartQty(item.id) > 0" class="absolute inset-0 bg-white/95 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-3 animate-fade-in border-2 border-primary rounded-3xl">
+                <p class="font-bold text-sm text-secondary px-2 truncate w-full text-center">{{ item.name }}</p>
+                <div class="flex items-center gap-3">
+                  <button @click.stop="updateQtyById(item.id, -1)" class="bg-red-100 text-red-600 w-10 h-10 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform"><i class="ph-bold ph-minus text-lg"></i></button>
+                  <span class="text-2xl font-black text-primary w-8 text-center">{{ getCartQty(item.id) }}</span>
+                  <button @click.stop="addToCart(item)" class="bg-green-100 text-green-600 w-10 h-10 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform"><i class="ph-bold ph-plus text-lg"></i></button>
+                </div>
+              </div>
             </div>
+            
             <div v-if="!filteredProducts.length" class="col-span-2 text-center py-10 text-gray-400 text-sm">Produk belum tersedia.</div>
           </div>
 
@@ -356,6 +371,16 @@
             </div>
           </div>
 
+          <div class="bg-white rounded-3xl shadow-soft border border-gray-50 overflow-hidden">
+            <div class="p-4 border-b border-gray-50 flex items-center gap-3">
+              <div class="bg-green-50 text-green-600 p-2 rounded-xl"><i class="ph-fill ph-microsoft-excel-logo text-xl"></i></div>
+              <h3 class="font-bold text-secondary">Data Backup Excel</h3>
+            </div>
+            <div class="p-2 space-y-1">
+              <button @click="exportDataExcel" class="w-full text-left px-4 py-3 hover:bg-gray-50 flex justify-between items-center rounded-xl transition-colors"><span class="text-sm font-medium">Export Semua Data Excel</span><i class="ph-bold ph-download-simple text-gray-400"></i></button>
+            </div>
+          </div>
+
           <button @click="logout" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold shadow-sm border border-red-100 flex items-center justify-center gap-2">
             <i class="ph-bold ph-sign-out text-lg"></i> Keluar Kasir
           </button>
@@ -395,9 +420,9 @@
               <p class="text-primary font-semibold text-sm">Rp {{ formatCurrency(item.price) }}</p>
             </div>
             <div class="flex items-center gap-3 bg-gray-50 px-2 py-1.5 rounded-xl border border-gray-100">
-              <button @click="updateQty(index, -1)" class="text-gray-500 w-6 h-6"><i class="ph-bold ph-minus"></i></button>
+              <button @click="updateQty(index, -1)" class="text-gray-500 w-6 h-6 active:scale-90 transition-transform"><i class="ph-bold ph-minus"></i></button>
               <span class="font-bold w-4 text-center text-sm">{{ item.qty }}</span>
-              <button @click="updateQty(index, 1)" class="text-primary w-6 h-6"><i class="ph-bold ph-plus"></i></button>
+              <button @click="updateQty(index, 1)" class="text-primary w-6 h-6 active:scale-90 transition-transform"><i class="ph-bold ph-plus"></i></button>
             </div>
           </div>
         </div>
@@ -506,7 +531,7 @@
 
 <script>
 // =========================================================
-// SCRIPT FIREBASE INITIALIZATION 
+// SCRIPT FIREBASE INITIALIZATION
 // =========================================================
 
 const firebaseConfig = {
@@ -528,7 +553,7 @@ try {
   console.warn("Firebase belum di-setup dengan benar.");
 }
 
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
 
 createApp({
   setup() {
@@ -544,6 +569,9 @@ createApp({
     const showExpenseModal = ref(false);
     const showDateFilterModal = ref(false);
     const isSavingSettings = ref(false);
+
+    // Fitur Enterprise: Koneksi Database
+    const isOnline = ref(true);
 
     const cart = ref([]);
     const transactions = ref([]);
@@ -569,6 +597,22 @@ createApp({
     const liveClock = ref('');
     const currentDateTime = ref('');
     const tabs = ['dashboard', 'kasir', 'produk', 'laporan', 'pengaturan'];
+
+    // Fitur Enterprise: Auto-Lock Sesi (Idle Timeout 15 Menit)
+    const IDLE_TIMEOUT_MS = 15 * 60 * 1000; 
+    let idleTimer;
+
+    const resetIdleTimer = () => {
+      clearTimeout(idleTimer);
+      if (isLoggedIn.value) {
+        idleTimer = setTimeout(() => {
+          isLoggedIn.value = false;
+          pin.value = '';
+          currentTab.value = 'dashboard';
+          loginError.value = "Sesi Anda terkunci otomatis demi keamanan.";
+        }, IDLE_TIMEOUT_MS);
+      }
+    };
 
     const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2200, timerProgressBar: true });
     const notify = (icon, title) => toast.fire({ icon, title });
@@ -596,9 +640,6 @@ createApp({
       try { return typeof items === 'string' ? JSON.parse(items || '[]') : []; } catch(e) { return []; }
     };
 
-    // =========================================================
-    // LISTENER FIREBASE REALTIME
-    // =========================================================
     const loadData = () => {
       if (!db) {
         systemError.value = "Firebase Error: Gagal menghubungkan ke server.";
@@ -607,6 +648,11 @@ createApp({
       }
 
       isLoadingSystem.value = true; systemError.value = '';
+      
+      // Deteksi status koneksi internet Firebase
+      db.ref('.info/connected').on('value', (snap) => {
+        isOnline.value = snap.val() === true;
+      });
       
       db.ref('warungkas').on('value', (snapshot) => {
         const data = snapshot.val() || {};
@@ -640,13 +686,17 @@ createApp({
       if (pin.value.length >= 4) return; pin.value += String(n); loginError.value = '';
       if (pin.value.length === 4) {
         setTimeout(() => {
-          if (pin.value === String(activePin.value)) { isLoggedIn.value = true; notify('success', 'Login berhasil'); } 
+          if (pin.value === String(activePin.value)) { 
+            isLoggedIn.value = true; 
+            resetIdleTimer(); // Mulai timer auto-lock
+            notify('success', 'Login berhasil'); 
+          } 
           else { loginError.value = 'PIN Salah!'; pin.value = ''; }
         }, 150);
       }
     };
     const removePin = () => { pin.value = pin.value.slice(0, -1); }; const clearPin = () => { pin.value = ''; };
-    const logout = async () => { const ok = await confirmAction('Keluar kasir?', 'Anda akan kembali ke layar login.'); if (!ok) return; isLoggedIn.value = false; pin.value = ''; currentTab.value = 'dashboard'; };
+    const logout = async () => { const ok = await confirmAction('Keluar kasir?', 'Anda akan kembali ke layar login.'); if (!ok) return; isLoggedIn.value = false; pin.value = ''; currentTab.value = 'dashboard'; clearTimeout(idleTimer); };
 
     const availableCategories = computed(() => { const base = ['Makanan', 'Minuman', 'Cemilan', 'Paket', 'Lainnya']; const fromProducts = products.value.map(p => p.category).filter(Boolean); return [...new Set([...base, ...fromProducts])]; });
     const filteredProducts = computed(() => { return products.value.filter(p => { const catOk = activeCategory.value === 'Semua' || p.category === activeCategory.value; const searchOk = p.name.toLowerCase().includes(searchQuery.value.toLowerCase()); const statusOk = p.status !== 'nonaktif'; return catOk && searchOk && statusOk; }); });
@@ -715,9 +765,6 @@ createApp({
 
     const generateWAURL = () => { let text = storeProfile.value.name.toUpperCase() + '\n'; text += new Date().toLocaleString('id-ID') + '\n'; text += '-----------------------------\n'; cart.value.forEach(item => { text += '- ' + item.name + ' ' + item.qty + ' x Rp ' + formatCurrency(item.price * item.qty) + '\n'; }); text += '-----------------------------\n'; if (diskon.value > 0) text += 'Diskon: -Rp ' + formatCurrency(diskon.value) + '\n'; text += 'TOTAL: Rp ' + formatCurrency(cartTotal.value) + '\n'; text += '-----------------------------\n'; text += formSettings.value.pesanfooter + '\nTerima kasih!'; let targetNum = customer.value.phone || storeProfile.value.phone || ''; if (targetNum.startsWith('0')) targetNum = '62' + targetNum.substring(1); else if (!targetNum.startsWith('62')) targetNum = '62' + targetNum; return 'https://wa.me/' + targetNum + '?text=' + encodeURIComponent(text); };
     
-    // =========================================================
-    // FUNGSI CRUD FIREBASE (JAUH LEBIH CEPAT & SIMPLE)
-    // =========================================================
     const processPayment = async (type) => {
       if (!cart.value.length) { notify('error', 'Keranjang masih kosong'); return; }
       const tempId = generateId('TRX'); 
@@ -729,7 +776,6 @@ createApp({
         items: cart.value.map(i => ({ id: i.id, name: i.name, qty: Number(i.qty), price: Number(i.price), hpp: Number(i.hpp || 0) })) 
       };
       
-      // Simpan Instan ke Firebase
       db.ref('warungkas/transactions/' + tempId).set(payload);
       
       if (type === 'wa') window.open(generateWAURL(), '_blank');
@@ -784,14 +830,25 @@ createApp({
       }
     };
     
-    // EXPORT EXCEL DARI DATA LOKAL YG SUDAH REALTIME
     const exportDataExcel = () => { const wb = XLSX.utils.book_new(); const wsProducts = XLSX.utils.json_to_sheet(products.value); const wsTransactions = XLSX.utils.json_to_sheet(transactions.value.map(t => ({ ...t, items: JSON.stringify(t.items || []) }))); const wsExpenses = XLSX.utils.json_to_sheet(expenses.value); XLSX.utils.book_append_sheet(wb, wsProducts, 'Products'); XLSX.utils.book_append_sheet(wb, wsTransactions, 'Transactions'); XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses'); const fileName = 'WarungKas_Backup_' + Date.now() + '.xlsx'; XLSX.writeFile(wb, fileName); notify('success', 'Export Excel berhasil'); };
     
     const handleLogoUpload = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const MAX_WIDTH = 250; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); formSettings.value.logo = canvas.toDataURL('image/jpeg', 0.8); notify('success', 'Foto berhasil dipilih'); }; img.src = event.target.result; }; reader.readAsDataURL(file); };
 
     onMounted(() => { 
       updateClock(); setInterval(updateClock, 1000); 
-      loadData(); // Langsung tarik dari Firebase
+      loadData(); 
+
+      // Listener untuk mereset timer saat ada aktivitas kasir
+      window.addEventListener('mousemove', resetIdleTimer);
+      window.addEventListener('keydown', resetIdleTimer);
+      window.addEventListener('touchstart', resetIdleTimer);
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('mousemove', resetIdleTimer);
+      window.removeEventListener('keydown', resetIdleTimer);
+      window.removeEventListener('touchstart', resetIdleTimer);
+      clearTimeout(idleTimer);
     });
 
     return {
@@ -802,7 +859,8 @@ createApp({
       showExpenseModal, formExpense, saveExpense, deleteExpense, addExpenseItem, removeExpenseItem, expenseTotal, dashboardInsight,
       reportFilter, filteredReport, filteredTransactions, filteredExpenses, dashboardStats, topSoldToday,
       storeProfile, formSettings, saveSettings, isSavingSettings, exportDataExcel, handleLogoUpload,
-      setReportFilter, openDateFilter, showDateFilterModal, dateFilter, applyDateFilter, resetDateFilter, tabs, deleteTransaction, editTransaction
+      setReportFilter, openDateFilter, showDateFilterModal, dateFilter, applyDateFilter, resetDateFilter, tabs, deleteTransaction, editTransaction,
+      isOnline
     };
   }
 }).mount('#app');
