@@ -966,14 +966,14 @@ createApp({
     const generateWAURL = () => { 
       let text = `${formSettings.value.waHeader || 'Halo! Berikut pesanan Anda:'}\n`; 
       text += new Date().toLocaleString('id-ID') + '\n'; 
-      text += '---------------------------------------------\n'; 
+      text += '-----------------------------------------------------\n'; 
       cart.value.forEach(item => { 
-        text += `*${item.name}* *(${item.qty}x)*\nRp *${formatCurrency(item.price * item.qty)}*\n`; 
+        text += `*${item.name}* *(${item.qty}x)*\n*Rp ${formatCurrency(item.price * item.qty)}*\n`; 
       }); 
-      text += '---------------------------------------------\n'; 
+      text += '-----------------------------------------------------\n'; 
       if (diskon.value > 0) text += `Diskon: -Rp ${formatCurrency(diskon.value)}\n`; 
       text += `*TOTAL: Rp ${formatCurrency(cartTotal.value)}*\n`; 
-      text += '---------------------------------------------\n'; 
+      text += '-----------------------------------------------------\n'; 
       text += `${formSettings.value.waFooter || 'Terima kasih sudah jajan!'}`; 
 
       const encodedText = encodeURIComponent(text);
