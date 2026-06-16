@@ -968,11 +968,11 @@ createApp({
       text += new Date().toLocaleString('id-ID') + '\n'; 
       text += '---------------------------------------------\n'; 
       cart.value.forEach(item => { 
-        text += `${item.name} (${item.qty}x)\nRp ${formatCurrency(item.price * item.qty)}\n`; 
+        text += `*${item.name}* (${item.qty}x)\nRp ${formatCurrency(item.price * item.qty)}\n`; 
       }); 
       text += '---------------------------------------------\n'; 
       if (diskon.value > 0) text += `Diskon: -Rp ${formatCurrency(diskon.value)}\n`; 
-      text += `TOTAL: Rp ${formatCurrency(cartTotal.value)}\n`; 
+      text += `*TOTAL: Rp ${formatCurrency(cartTotal.value)}*\n`; 
       text += '---------------------------------------------\n'; 
       text += `${formSettings.value.waFooter || 'Terima kasih sudah jajan!'}`; 
 
