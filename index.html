@@ -9,6 +9,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#FF6B35">
   <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"Cemilan Cepuluh POS","short_name":"Cepuluh POS","start_url":"/","display":"standalone","background_color":"#F8FAFC","theme_color":"#FF6B35","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/8628/8628559.png","sizes":"512x512","type":"image/png"}]}'>
+  
+  <link rel="icon" type="image/png" id="dynamic-favicon" href="https://cdn-icons-png.flaticon.com/512/8628/8628559.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,7 +65,7 @@
   <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center animate-fade-in">
     <div class="loader mb-4"></div>
     <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan ke Cloud...</p>
-    <span class="mt-8 text-[10px] text-gray-400">CemilanCepuluh v6.5 Enterprise</span>
+    <span class="mt-8 text-[10px] text-gray-400">CemilanCepuluh v6.6</span>
   </div>
 
   <div v-else-if="systemError" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -466,7 +468,6 @@
               <label class="w-full text-left px-4 py-3 hover:bg-gray-50 flex justify-between items-center rounded-xl transition-colors cursor-pointer"><span class="text-sm font-medium">Upload Excel ke Cloud</span><i class="ph-bold ph-upload-simple text-gray-400 text-lg"></i><input type="file" accept=".xlsx,.xls" class="hidden" @change="importDataExcel"></label>
             </div>
           </div>
-
         </div>
         
         <div v-else class="flex flex-col items-center justify-center py-20 animate-fade-in text-center px-4">
@@ -667,7 +668,7 @@
 
 <script>
 // =========================================================
-// SCRIPT FIREBASE INITIALIZATION & CONFIG (TERINJEKSI)
+// SCRIPT FIREBASE INITIALIZATION & CONFIG
 // =========================================================
 
 const firebaseConfig = {
@@ -689,7 +690,7 @@ try {
   console.warn("Firebase belum di-setup dengan benar.");
 }
 
-const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+const { createApp, ref, computed, onMounted, onUnmounted, watch } = Vue;
 
 createApp({
   setup() {
@@ -785,6 +786,16 @@ createApp({
       if (Array.isArray(items)) return items;
       try { return typeof items === 'string' ? JSON.parse(items || '[]') : []; } catch(e) { return []; }
     };
+
+    // =========================================================
+    // DYNAMIC FAVICON (IKON URL OTOMATIS)
+    // =========================================================
+    watch(() => storeProfile.value.logo, (newLogo) => {
+      if (newLogo) {
+        const favicon = document.getElementById('dynamic-favicon');
+        if (favicon) favicon.href = newLogo;
+      }
+    });
 
     // =========================================================
     // LISTENER FIREBASE REALTIME
@@ -950,18 +961,18 @@ createApp({
     const resetDateFilter = () => { reportFilter.value = { mode: 'all', start: '', end: '' }; showDateFilterModal.value = false; notify('success', 'Filter direset'); };
 
     // =========================================================
-    // SMART WA TEMPLATE BUG FIX (NO NUMBER & TEXT FORMAT)
+    // SMART WA TEMPLATE (PLAIN TEXT TEMPLATE)
     // =========================================================
     const generateWAURL = () => { 
       let text = `${formSettings.value.waHeader || 'Halo! Berikut pesanan Anda:'}\n`; 
       text += new Date().toLocaleString('id-ID') + '\n'; 
       text += '---------------------------------------------\n'; 
       cart.value.forEach(item => { 
-        text += `*${item.name} (${item.qty}x)*\nRp ${formatCurrency(item.price * item.qty)}\n`; 
+        text += `${item.name} (${item.qty}x)\nRp ${formatCurrency(item.price * item.qty)}\n`; 
       }); 
       text += '---------------------------------------------\n'; 
       if (diskon.value > 0) text += `Diskon: -Rp ${formatCurrency(diskon.value)}\n`; 
-      text += `*TOTAL: Rp ${formatCurrency(cartTotal.value)}*\n`; 
+      text += `TOTAL: Rp ${formatCurrency(cartTotal.value)}\n`; 
       text += '---------------------------------------------\n'; 
       text += `${formSettings.value.waFooter || 'Terima kasih sudah jajan!'}`; 
 
@@ -1050,7 +1061,6 @@ createApp({
           });
         }
       });
-      // Akumulasi pengembalian stok agar aman
       Object.keys(stockReturns).forEach(baseId => {
          const productInDB = products.value.find(p => p.id === baseId);
          if (productInDB) { updates[`warungkas/products/${baseId}/stock`] = (productInDB.stock || 0) + stockReturns[baseId]; }
@@ -1083,7 +1093,6 @@ createApp({
     const expenseTotal = computed(() => formExpense.value.items.reduce((s, i) => s + Number(i.nominal || 0), 0));
 
     const saveExpense = () => {
-      // Jika mode Edit (hanya 1 item)
       if (formExpense.value.id) {
         const item = formExpense.value.items[0];
         if (!item.keterangan || Number(item.nominal) <= 0) return notify('error', 'Data tidak valid');
@@ -1094,7 +1103,6 @@ createApp({
         showExpenseModal.value = false;
         notify('success', 'Pengeluaran diperbarui');
       } 
-      // Jika mode Tambah Baru (bisa multi-item)
       else {
         const validItems = formExpense.value.items.filter(i => i.keterangan && Number(i.nominal) > 0);
         if (validItems.length === 0) return notify('error', 'Masukkan minimal 1 pengeluaran');
