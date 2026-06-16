@@ -953,7 +953,7 @@ createApp({
     // SMART WA TEMPLATE BUG FIX (NO NUMBER & TEXT FORMAT)
     // =========================================================
     const generateWAURL = () => { 
-      let text = `*${formSettings.value.waHeader || 'Halo! Berikut pesanan Anda:'}*\n`; 
+      let text = `${formSettings.value.waHeader || 'Halo! Berikut pesanan Anda:'}\n`; 
       text += new Date().toLocaleString('id-ID') + '\n'; 
       text += '---------------------------------------------\n'; 
       cart.value.forEach(item => { 
