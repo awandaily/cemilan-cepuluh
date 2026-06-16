@@ -58,7 +58,7 @@
   <div v-if="isLoadingSystem" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center animate-fade-in">
     <div class="loader mb-4"></div>
     <p class="text-sm font-semibold text-gray-500 animate-pulse">Menghubungkan ke Cloud...</p>
-    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.1 (Topping Edition)</span>
+    <span class="mt-8 text-[10px] text-gray-400">WarungKas v6.2 (Share WA Fix)</span>
   </div>
 
   <div v-else-if="systemError" class="absolute inset-0 bg-white z-[60] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -467,7 +467,7 @@
         </div>
 
         <div class="flex-1 overflow-y-auto space-y-3 mb-4 hide-scrollbar border-t border-b border-gray-100 py-3">
-           <label v-for="(v, idx) in parsedVariantsList" :key="idx" class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl border border-gray-200 cursor-pointer active:scale-95 transition-all" :class="{'border-primary bg-orange-50': selectedVariants.includes(v)}">
+           <label v-for="(v, idx) in parsedVariantsList" :key="idx" class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl border border-gray-200 cursor-pointer active:scale-95 transition-all" :class="{'border-primary bg-orange-50': selectedVariants.some(sv => sv.name === v.name)}">
              <div>
                <p class="font-bold text-sm text-secondary">{{ v.name }}</p>
                <p class="text-xs text-primary font-semibold" v-if="v.price > 0">+ Rp {{ formatCurrency(v.price) }}</p>
@@ -630,19 +630,18 @@
 
 <script>
 // =========================================================
-// ⬇️ GANTI FIREBASE CONFIG ANDA DI SINI ⬇️
+// SCRIPT FIREBASE INITIALIZATION
 // =========================================================
+
 const firebaseConfig = {
   apiKey: "AIzaSyA1wiHFHpADLUaZas0AqNMLnmo6rgbPvZg",
   authDomain: "cemilan-cepuluh.firebaseapp.com",
-  databaseURL: "https://cemilan-cepuluh-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "cemilan-cepuluh",
   storageBucket: "cemilan-cepuluh.firebasestorage.app",
   messagingSenderId: "891392027777",
   appId: "1:891392027777:web:3db40e8b3b1403091e7180",
   measurementId: "G-EHVJ2LXLYF"
 };
-// =========================================================
 
 let db;
 try {
@@ -671,7 +670,7 @@ createApp({
     const showProductModal = ref(false);
     const showExpenseModal = ref(false);
     const showDateFilterModal = ref(false);
-    const showVariantModal = ref(false); // Modal Topping
+    const showVariantModal = ref(false);
     const isSavingSettings = ref(false);
 
     // Fitur Enterprise: Koneksi Database
@@ -779,11 +778,6 @@ createApp({
           storeProfile.value.logo = data.settings.logo || '';
           activePin.value = String(data.settings.pin || '1234');
           activePinKasir.value = String(data.settings.pinKasir || '0000');
-        } else {
-          if(products.value.length === 0) {
-             const dummy = { id: generateId('PRD'), name: 'Sosis Bakar Besar', category: 'Cemilan', price: 12000, hpp: 6000, stock: 100, icon: '🌭', status: 'aktif', variants: '' };
-             db.ref('warungkas/products/' + dummy.id).set(dummy);
-          }
         }
         
         isLoadingSystem.value = false;
@@ -860,8 +854,8 @@ createApp({
       }
       
       const cartItemKey = selectedProductForVariant.value.id + extraNames.join('');
-      
       const existingItem = cart.value.find(i => i.cartKey === cartItemKey);
+      
       if (existingItem) {
         if (getCartQtyByBaseId(selectedProductForVariant.value.id) >= (selectedProductForVariant.value.stock || 0)) { notify('error', 'Stok tidak mencukupi'); return; }
         existingItem.qty += 1;
@@ -885,7 +879,6 @@ createApp({
       const cartItemKey = product.id;
       const itemInCart = cart.value.find(i => i.cartKey === cartItemKey); 
       
-      // Hitung total qty dari base produk ini di seluruh keranjang
       if (getCartQtyByBaseId(product.id) >= (product.stock || 0)) { notify('error', 'Stok tidak mencukupi'); return; }
       
       if (itemInCart) itemInCart.qty += 1; 
@@ -898,7 +891,6 @@ createApp({
       return item ? item.qty : 0; 
     };
 
-    // Menghitung Total semua Varian dari 1 Produk Induk
     const getCartQtyByBaseId = (baseId) => { 
       return cart.value.filter(i => (i.baseId || i.id) === baseId).reduce((sum, i) => sum + i.qty, 0); 
     };
@@ -960,8 +952,10 @@ createApp({
       trxs.forEach(t => {
         const parsed = parseItems(t.items);
         parsed.forEach(i => { 
-          if (!itemMap[i.name]) itemMap[i.name] = { name: i.name, qty: 0 }; 
-          itemMap[i.name].qty += Number(i.qty || 0); 
+          // Pakai nama item yang murni (tanpa topping) agar data grouping lebih rapi
+          const cleanName = i.name.split(' (+')[0];
+          if (!itemMap[cleanName]) itemMap[cleanName] = { name: cleanName, qty: 0 }; 
+          itemMap[cleanName].qty += Number(i.qty || 0); 
         });
       });
       const sorted = Object.values(itemMap).sort((a, b) => b.qty - a.qty).slice(0, 5);
@@ -983,7 +977,29 @@ createApp({
     const applyDateFilter = () => { if (!dateFilter.value.start) { notify('error', 'Tanggal belum dipilih'); return; } reportFilter.value.mode = 'range'; reportFilter.value.start = dateFilter.value.start; reportFilter.value.end = dateFilter.value.mode === 'range' ? (dateFilter.value.end || dateFilter.value.start) : dateFilter.value.start; showDateFilterModal.value = false; notify('success', 'Filter tanggal diterapkan'); };
     const resetDateFilter = () => { reportFilter.value = { mode: 'all', start: '', end: '' }; showDateFilterModal.value = false; notify('success', 'Filter direset'); };
 
-    const generateWAURL = () => { let text = storeProfile.value.name.toUpperCase() + '\n'; text += new Date().toLocaleString('id-ID') + '\n'; text += '-----------------------------\n'; cart.value.forEach(item => { text += '- ' + item.name + ' ' + item.qty + ' x Rp ' + formatCurrency(item.price * item.qty) + '\n'; }); text += '-----------------------------\n'; if (diskon.value > 0) text += 'Diskon: -Rp ' + formatCurrency(diskon.value) + '\n'; text += 'TOTAL: Rp ' + formatCurrency(cartTotal.value) + '\n'; text += '-----------------------------\n'; text += formSettings.value.pesanfooter + '\nTerima kasih!'; let targetNum = customer.value.phone || storeProfile.value.phone || ''; if (targetNum.startsWith('0')) targetNum = '62' + targetNum.substring(1); else if (!targetNum.startsWith('62')) targetNum = '62' + targetNum; return 'https://wa.me/' + targetNum + '?text=' + encodeURIComponent(text); };
+    // FUNGSI SHARE KE APLIKASI WHATSAPP HP (TANPA NOMOR SPESIFIK)
+    const generateWAURL = () => { 
+      let text = storeProfile.value.name.toUpperCase() + '\n'; 
+      text += new Date().toLocaleString('id-ID') + '\n'; 
+      text += '-----------------------------\n'; 
+      cart.value.forEach(item => { text += '- ' + item.name + ' ' + item.qty + ' x Rp ' + formatCurrency(item.price * item.qty) + '\n'; }); 
+      text += '-----------------------------\n'; 
+      if (diskon.value > 0) text += 'Diskon: -Rp ' + formatCurrency(diskon.value) + '\n'; 
+      text += 'TOTAL: Rp ' + formatCurrency(cartTotal.value) + '\n'; 
+      text += '-----------------------------\n'; 
+      text += formSettings.value.pesanfooter + '\nTerima kasih!'; 
+
+      let targetNum = customer.value.phone || ''; 
+
+      if (targetNum) {
+        if (targetNum.startsWith('0')) targetNum = '62' + targetNum.substring(1);
+        else if (!targetNum.startsWith('62') && !targetNum.startsWith('+62')) targetNum = '62' + targetNum;
+        return 'https://api.whatsapp.com/send?phone=' + targetNum.replace('+', '') + '&text=' + encodeURIComponent(text);
+      } else {
+        // Membuka fitur "Teruskan / Forward" ke kontak di aplikasi WA jika kolom no pelanggan kosong
+        return 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text);
+      }
+    };
     
     // =========================================================
     // FUNGSI CRUD FIREBASE 
